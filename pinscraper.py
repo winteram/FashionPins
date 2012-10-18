@@ -1,24 +1,19 @@
-import mechanize
+import urllib
+import BeautifulSoup from bs4
+import math
 
 user = "calistoddard"
 pinurl = "http://pinterest.com"
 
-br = mechanize.Browser()
-br.open(pinurl + "/" + user)
 
-# get folders matching particular folder name
-# will want to change to getting just folder folders
-folders = br.links(url_regex=user,text_regex='\xc2\xa0')
-folderlinks = []
-pinurls = []
-for folder in folders:
-    folderlinks.append(folder.url)
+firstpg = urllib.open(pinurl + "/" + user + "/pins/")
 
-for folderlink in folderlinks:
-    br.open(pinurl + folderlink)
-    # get pins in folder
-    pins = br.links(url_regex="^/pin")
-    for pin in pins:
-        print  '"' + folderlink + '","' + pin.url  + '","' + pin.text + '"'
+# get total number of pins from first page
+pincount = 0 #fix
+
+# 
+npages = math.ceiling(pincount / 50)
+for page in npages:
+    # extract the folder, pin id, and source
 
 
