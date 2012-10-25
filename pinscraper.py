@@ -9,12 +9,14 @@ pinurl = "http://pinterest.com"
 
 firstpg = urllib.urlopen(pinurl + "/" + user + "/pins/")
 page=firstpg.read()
-count=re.compile(r'<strong>(.*?)</strong>  Pins')
+page
+count=re.compile(r'<strong>(.*?)</strong> Pins')
 pincount=count.search(page).group(1)
 npages=math.ceil(int(re.sub(r'[^\d-]+','',pincount))/50)
-
+npages
 
 soup = BeautifulSoup(firstpg)
+repins=soup.find_all("div","pin")
 
 
 #for page in npages:
