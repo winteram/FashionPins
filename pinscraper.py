@@ -3,11 +3,13 @@ import re
 from bs4 import BeautifulSoup
 import math
 import time
+import pprint
 
 user = "calistoddard"
 pinurl = "http://pinterest.com"
+pp = pprint.PrettyPrinter(indent=4)
 
-firstpg = urllib.urlopen(pinurl + "/" + user + "/pins/?page=2")
+firstpg = urllib.urlopen(pinurl + "/" + user + "/pins/?page=3")
 page = firstpg.read()
 fh = open("calliepins.html","w")
 fh.write(page)
@@ -32,26 +34,31 @@ start = time.time()
 
 
 soup = BeautifulSoup(page)
-for pin in soup.find_all("a","PinImage ImgLink"):
-    pinids.append(pin['href'])
 
-for item in soup.find_all("div","pin"):   
-    sourcenext = -1
-    for child in item.descendants:
-        tagtext = child.string if not str(child.string)=="None" else "YOUWILLNEVERFINDTHIS"
-        print tagtext.decode('utf-8')
-        if re.match(ur'<a class="" href="/'+user,tagtext, re.UNICODE):
-            boards.append(tagtext)
-        if sourcenext == 1:
-            sources.append(tagtext)
-            sourcenext = 0
-        if re.match(' from',tagtext, re.UNICODE):
-            sourcenext = 1
-    if sourcenext == -1:
-        sources.append("None")
+for pin in soup.find_all("div","pin"):
+    pinid = "None"
+    board = "None"
+    source = "None"
+    for pinid_a in pin.find_all("a","PinImage ImgLink"):
+        pinid = pinid_a['href']
+    for clearfix in pin.find_all("div","convo attribution clearfix"):
+        for noimage in clearfix.find_all("p","NoImage"):
+            for link in noimage.find_all("a"):
+                if re.match('/'+user,link['href']):
+                    board = link['href']
+                else:
+                    source = link['href']
+    pinids.append(pinid)
+    boards.append(board)
+    sources.append(source)
 
-        
+
+
+print "pinids: " + str(len(pinids))
+print "boards: " + str(len(boards))
+print "sources: " + str(len(sources))
+
 allpins = zip(pinids,boards,sources)
-print allpins
+pp.pprint(sources)
 #for page in npages:
     # extract the folder, pin id, and source
