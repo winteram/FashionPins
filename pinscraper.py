@@ -5,52 +5,58 @@ import math
 import time
 import pprint
 
-user = "calistoddard"
+searchword="fashion"
 pinurl = "http://pinterest.com"
-pp = pprint.PrettyPrinter(indent=4)
+boardpg = urllib.urlopen("http://pinterest.com/search/boards/?q="+searchword)
+boardread = boardpg.read()
 
-firstpg = urllib.urlopen(pinurl + "/" + user + "/pins/?page=3")
-page = firstpg.read()
-fh = open("calliepins.html","w")
-fh.write(page)
-fh.close()
- 
+
 # initialize arrays
+boardlist=[]
 pinids = []
 boards = []
 sources = []
 
-count = re.compile(ur'<strong>(.*?)</strong> Pins', re.UNICODE)
-pincount = count.search(page).group(1)
-npages = math.ceil(int(re.sub(r'[^\d-]+','',pincount))/50)
-npages
 
 start = time.time()
 # test whether more than 0.5 second has passed
 elapsed = time.time() - start
 if elapsed > 0.5:
     time.sleep(0.5)
+
 start = time.time()
 
-
-soup = BeautifulSoup(page)
-
-for pin in soup.find_all("div","pin"):
-    pinid = "None"
-    board = "None"
-    source = "None"
-    for pinid_a in pin.find_all("a","PinImage ImgLink"):
-        pinid = pinid_a['href']
-    for clearfix in pin.find_all("div","convo attribution clearfix"):
-        for noimage in clearfix.find_all("p","NoImage"):
-            for link in noimage.find_all("a"):
-                if re.match('/'+user,link['href']):
-                    board = link['href']
-                else:
-                    source = link['href']
-    pinids.append(pinid)
-    boards.append(board)
-    sources.append(source)
+for a in range(0,50):
+	soup = BeautifulSoup(boardread)
+	for board_div in soup.find_all("div","pin pinBoard"):
+		for h3_name in board_div("h3","serif"):
+			for a_name in h3_name("a"):
+				board_name=a_name['href']
+			boardlist.append(board_name)
+	firstpg = urllib.urlopen(pinurl + "/" + boardlist[a])
+	pageread = firstpg.read()
+	count = re.compile(ur'<strong>(.*?)</strong> pins', re.UNICODE)
+	pincount = count.search(pageread).group(1)
+	npages = math.ceil(int(re.sub(r'[^\d-]+','',pincount))/50)
+	npages
+	npage=int(npages)			
+   	for i in range(1,npage+2):
+    		pages=urllib.urlopen(pinurl+"/"+boardlist[a]+"?page="+str(i))
+    		page=pages.read()
+    		soup = BeautifulSoup(page)
+    		for pin in soup.find_all("div","pin"):
+    	   		pinid = "None"
+    	   		board = "None"
+    	  	 	source = "None"
+           		for pinid_a in pin.find_all("a","PinImage ImgLink"):
+               			pinid = pinid_a['href']
+           		for clearfix in pin.find_all("div","convo attribution clearfix"):
+                   		for link in clearfix.find_all("a"):
+                       	   		board=boardlist[a]
+                           		source = link['href']
+           		pinids.append(pinid)
+           		boards.append(board)
+           		sources.append(source)
 
 
 
@@ -59,6 +65,3 @@ print "boards: " + str(len(boards))
 print "sources: " + str(len(sources))
 
 allpins = zip(pinids,boards,sources)
-pp.pprint(sources)
-#for page in npages:
-    # extract the folder, pin id, and source
