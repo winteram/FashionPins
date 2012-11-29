@@ -16,6 +16,7 @@ boardlist=[]
 pinids = []
 boards = []
 sources = []
+userlist = []
 userids = []
 
 start = time.time()
@@ -33,6 +34,9 @@ for bpage in range(1,nboardpages):
     boardread = boardpg.read()
     soup = BeautifulSoup(boardread)
     for board_div in soup.find_all("div","pin pinBoard"):
+        for userid_a in board_div.find_all("a","colorless"):
+            userid = userid_a["href"]
+            userlist.append(userid)
         for h3_name in board_div("h3","serif"):
             for a_name in h3_name("a"):
                 board_name=a_name['href']
@@ -57,18 +61,18 @@ for a in range(0,len(boardlist)):
     	   		board = "None"
     	  	 	source = "None"
                         userid = "None"
-                        for userid_a in pin.find_all("h4","user"):
-                            userid = userid_a[0]["href"]
            		for pinid_a in pin.find_all("a","PinImage ImgLink"):
                			pinid = pinid_a['href']
            		for clearfix in pin.find_all("div","convo attribution clearfix"):
                    		for link in clearfix.find_all("a"):
-                       	   		board=boardlist[a]
-                           		source = link['href']
+                                    userid=userlist[a]
+                                    board=boardlist[a]
+                                    source = link['href']
            		pinids.append(pinid)
            		boards.append(board)
            		sources.append(source)
                         userids.append(userid)
+
 
 
 print "pinids: " + str(len(pinids))
@@ -78,6 +82,6 @@ print "users: " + str(len(userids))
 
 allpins = zip(pinids,userids,boards,sources)
 f = open("allpins.txt","w")
-writer = csv.writer(f)
+writer = UnicodeWriter(f)
 writer.writerows(allpins)
 f.close()
