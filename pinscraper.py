@@ -20,17 +20,17 @@ userlist = []
 userids = []
 
 start = time.time()
-# test whether more than 0.5 second has passed
-elapsed = time.time() - start
-if elapsed > 0.5:
-    time.sleep(0.5)
-
-start = time.time()
 
 nboardpages=3
 for bpage in range(1,nboardpages):
     print "opening board list " + str(bpage)
     boardpg = urllib.urlopen(boardpgurl+str(bpage))
+    # test whether more than 0.5 second has passed
+    elapsed = time.time() - start
+    if elapsed > 0.5:
+        time.sleep(0.5)
+    start = time.time()
+
     boardread = boardpg.read()
     soup = BeautifulSoup(boardread)
     for board_div in soup.find_all("div","pin pinBoard"):
@@ -45,33 +45,47 @@ for bpage in range(1,nboardpages):
 print "Number of boards: "+str(len(boardlist))
 
 for a in range(0,len(boardlist)):
-	firstpg = urllib.urlopen(pinurl + "/" + boardlist[a])
-	pageread = firstpg.read()
-	count = re.compile(ur'<strong>(.*?)</strong> pins', re.UNICODE)
-	pincount = count.search(pageread).group(1)
-	npages = math.ceil(int(re.sub(r'[^\d-]+','',pincount))/50)
-	print "Pin pages in board "+str(a)+": "+str(npages)
-	npage=int(npages)			
-   	for i in range(1,npage+2):
-    		pages=urllib.urlopen(pinurl+"/"+boardlist[a]+"?page="+str(i))
-    		page=pages.read()
-    		soup = BeautifulSoup(page)
-    		for pin in soup.find_all("div","pin"):
-    	   		pinid = "None"
-    	   		board = "None"
-    	  	 	source = "None"
-                        userid = "None"
-           		for pinid_a in pin.find_all("a","PinImage ImgLink"):
-               			pinid = pinid_a['href']
-           		for clearfix in pin.find_all("div","convo attribution clearfix"):
-                   		for link in clearfix.find_all("a"):
-                                    userid=userlist[a]
-                                    board=boardlist[a]
-                                    source = link['href']
-           		pinids.append(pinid)
-           		boards.append(board)
-           		sources.append(source)
-                        userids.append(userid)
+    firstpg = urllib.urlopen(pinurl + "/" + boardlist[a])
+    # test whether more than 0.5 second has passed
+    elapsed = time.time() - start
+    if elapsed > 0.5:
+        time.sleep(0.5)
+    start = time.time()
+
+    pageread = firstpg.read()
+    count = re.compile(ur'<strong>(.*?)</strong> pins', re.UNICODE)
+    numpinsrch = count.search(pageread)
+    print "Number of pins on page: " + numpinsrch
+    pincount = numpinsrch.group(1)
+    npages = math.ceil(int(re.sub(r'[^\d-]+','',pincount))/50)
+    print "Pin pages in board "+str(a)+": "+str(npages)
+    npage=int(npages)			
+    for i in range(1,npage+2):
+        pages=urllib.urlopen(pinurl+"/"+boardlist[a]+"?page="+str(i))
+        # test whether more than 0.5 second has passed
+        elapsed = time.time() - start
+        if elapsed > 0.5:
+            time.sleep(0.5)
+        start = time.time()
+
+        page=pages.read()
+        soup = BeautifulSoup(page)
+        for pin in soup.find_all("div","pin"):
+            pinid = "None"
+            board = "None"
+            source = "None"
+            userid = "None"
+            for pinid_a in pin.find_all("a","PinImage ImgLink"):
+                pinid = pinid_a['href']
+            for clearfix in pin.find_all("div","convo attribution clearfix"):
+                for link in clearfix.find_all("a"):
+                    userid=userlist[a]
+                    board=boardlist[a]
+                    source = link['href']
+            pinids.append(pinid)
+            boards.append(board)
+            sources.append(source)
+            userids.append(userid)
 
 
 
