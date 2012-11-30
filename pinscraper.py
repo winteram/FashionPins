@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import math
 import time
 import pprint
-import csv
+from unicoderw import UnicodeWriter
 
 searchword="fashion"
 pinurl = "http://pinterest.com"
@@ -54,10 +54,17 @@ for a in range(0,len(boardlist)):
 
     pageread = firstpg.read()
     count = re.compile(ur'<strong>(.*?)</strong> pins', re.UNICODE)
-    numpinsrch = count.search(pageread)
-    print "Number of pins on page: " + numpinsrch
-    pincount = numpinsrch.group(1)
-    npages = math.ceil(int(re.sub(r'[^\d-]+','',pincount))/50)
+#     numpinsrch = count.search(pageread).groups()
+#     print "Number of pins on page: " + ".".join(numpinsrch)
+#     pincount = str(numpinsrch)
+#     npages = math.ceil(int(re.sub(r'[^\d-]+','',pincount))/50)
+    pincntpage = count.search(pageread)
+    if pincntpage:
+        pincount = count.search(pageread).groups()
+    else:
+        print "Error with finding # pins: " + boardlist[a]
+    print "Number of pins on page: " + str(pincount)
+    npages = math.ceil(float(re.sub(r'[^\d-]+','',pincount[0]))/50)
     print "Pin pages in board "+str(a)+": "+str(npages)
     npage=int(npages)			
     for i in range(1,npage+2):
