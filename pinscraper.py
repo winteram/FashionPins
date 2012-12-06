@@ -21,8 +21,8 @@ userids = []
 
 start = time.time()
 
-nboardpages=3
-for bpage in range(1,nboardpages):
+nboardpages=1
+for bpage in range(1,nboardpages+1):
     print "opening board list " + str(bpage)
     boardpg = urllib.urlopen(boardpgurl+str(bpage))
     # test whether more than 0.5 second has passed
@@ -46,15 +46,30 @@ print "Number of boards: "+str(len(boardlist))
 
 for a in range(0,len(boardlist)):
 	firstpg = urllib.urlopen(pinurl + "/" + boardlist[a])
+        # test whether more than 0.5 second has passed
+        elapsed = time.time() - start
+        if elapsed > 0.5:
+            time.sleep(0.5)
+        start = time.time()
+
 	pageread = firstpg.read()
 	count = re.compile(ur'<strong>(.*?)</strong> pins', re.UNICODE)
-	pincount = count.search(pageread).group(1)
+        pincount_group = count.search(pageread)
+        if not pincount_group:
+            a = a - 1
+            continue
+	pincount = pincount_group.group(1)
 	npages = math.ceil(int(re.sub(r'[^\d-]+','',pincount))/50)
 	print "Pin pages in board "+str(a)+": "+str(npages)
 	npage=int(npages)			
    	for i in range(1,npage+2):
     		pages=urllib.urlopen(pinurl+"/"+boardlist[a]+"?page="+str(i))
-    		page=pages.read()
+                # test whether more than 0.5 second has passed
+                elapsed = time.time() - start
+                if elapsed > 0.5:
+                    time.sleep(0.5)
+                start = time.time()
+                page=pages.read()
     		soup = BeautifulSoup(page)
     		for pin in soup.find_all("div","pin"):
     	   		pinid = "None"
@@ -68,6 +83,7 @@ for a in range(0,len(boardlist)):
            		for clearfix in pin.find_all("div","convo attribution clearfix"):
                    		for link in clearfix.find_all("a"):
                                     source = link['href']
+                        # remove sources that are None or Empty
            		pinids.append(pinid)
            		boards.append(board)
            		sources.append(source)
@@ -81,7 +97,14 @@ print "sources: " + str(len(sources))
 print "users: " + str(len(userids))
 
 allpins = zip(pinids,userids,boards,sources)
-f = open("allpins.txt","w")
+
+
+# sort by source
+
+# remove rows with duplicate source and user
+
+
+f = open("allpins.csv","w")
 writer = UnicodeWriter(f)
 writer.writerows(allpins)
 f.close()
