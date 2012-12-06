@@ -63,10 +63,10 @@ for a in range(0,len(boardlist)):
                         userid = "None"
            		for pinid_a in pin.find_all("a","PinImage ImgLink"):
                			pinid = pinid_a['href']
+               			userid=userlist[a]
+               			board=boardlist[a]
            		for clearfix in pin.find_all("div","convo attribution clearfix"):
                    		for link in clearfix.find_all("a"):
-                                    userid=userlist[a]
-                                    board=boardlist[a]
                                     source = link['href']
            		pinids.append(pinid)
            		boards.append(board)
@@ -81,7 +81,7 @@ print "sources: " + str(len(sources))
 print "users: " + str(len(userids))
 
 allpins = zip(pinids,userids,boards,sources)
-f = open("allpins.txt","w")
-writer = UnicodeWriter(f)
+f = open("allpins.csv","w")
+writer = csv.writer(f)
 writer.writerows(allpins)
 f.close()
