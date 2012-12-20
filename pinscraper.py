@@ -43,6 +43,7 @@ def getinitial():
                     boardlist.append(board_name)
 
     print "Number of boards: "+str(len(boardlist))
+	return boardlist
 
 # get pins from boards
 def getpins(boardlist, crawledboards):
