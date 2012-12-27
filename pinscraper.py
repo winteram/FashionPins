@@ -10,13 +10,13 @@ searchword="fashion"
 pinurl = "http://pinterest.com"
 boardpgurl = "http://pinterest.com/search/boards/?q="+searchword+"&page="
 
+keywords = ['fashion','style']
 
 # initialize arrays
 boardlist=[]
 userlist = []
 newboardlist=[]
-crawledboards=[]
-pinids=[]
+crawledboards={}
 
 pindict = {}
 
@@ -46,12 +46,14 @@ def getinitial():
                     boardlist.append(board_name)
 
     print "Number of boards: "+str(len(boardlist))
-	return boardlist
+    return boardlist
 
 # get pins from boards
-def getpins(boardlist, crawledboards):
-    for a in range(0,len(boardlist)):
-	firstpg = urllib.urlopen(pinurl + "/" + boardlist[a])
+def getpins(boardlist):
+    pinids=[]	
+#    for a in range(0,len(boardlist)):
+    for a in range(0,10):
+        firstpg = urllib.urlopen(pinurl + "/" + boardlist[a])
         # test whether more than 0.1 second has passed
         start = time.time()
         elapsed = time.time() - start
@@ -59,45 +61,51 @@ def getpins(boardlist, crawledboards):
             time.sleep(0.1)
         start = time.time()
 
-	pageread = firstpg.read()
-	count = re.compile(ur'<strong>(.*?)</strong> pins', re.UNICODE)
+        pageread = firstpg.read()
+        count = re.compile(ur'<strong>(.*?)</strong> pins', re.UNICODE)
         pincount_group = count.search(pageread)
         if not pincount_group:
             a = a - 1
             continue
-	pincount = pincount_group.group(1)
-	npages = math.ceil(int(re.sub(r'[^\d-]+','',pincount))/50)
-	print "Pin pages in board "+str(a)+": "+str(npages)
-        crawledboards.append(boardlist[a])
-	npage=int(npages)
-   	for i in range(1,npage+2):
-    		pages=urllib.urlopen(pinurl+"/"+boardlist[a]+"?page="+str(i))
+        pincount = pincount_group.group(1)
+        npages = math.ceil(int(re.sub(r'[^\d-]+','',pincount))/50)
+
+        print "Pin pages in board "+str(a)+": "+str(npages)
+        if boardlist[a] not in crawledboards:
+            crawledboards[boardlist[a]] = 0
+            npage=int(npages)
+            for i in range(1,npage+2):
+                pages=urllib.urlopen(pinurl+"/"+boardlist[a]+"?page="+str(i))
                 # test whether more than 0.1 second has passed
                 elapsed = time.time() - start
                 if elapsed > 0.1:
                     time.sleep(0.1)
                 start = time.time()
+				
                 page=pages.read()
-    		soup = BeautifulSoup(page)
-    		for pin in soup.find_all("div","pin"):
-    	   		pinid = "None"
-    	   		board = "None"
-    	  	 	source = "None"
-                        userid = "None"
-           		for pinid_a in pin.find_all("a","PinImage ImgLink"):
-               			pinid = pinid_a['href']
-               			#userid=userlist[a]
-                                userid = boardlist[a].split('/')[1]
-               			board=boardlist[a]
-           		for clearfix in pin.find_all("div","convo attribution clearfix"):
-                   		for link in clearfix.find_all("a"):
-                                    source = link['href']
-                        # remove sources that are None or Empty
-                        if source != "None" and source != '':
-                            key = userid+'-'+source
-                            if key not in pindict:
-                                pindict[key] = (pinid,board,userid,source)
-                                pinids.append(pinid)
+                soup = BeautifulSoup(page)
+                for pin in soup.find_all("div","pin"):
+                    pinid = "None"
+                    board = "None"
+                    source = "None"
+                    userid = "None"
+                    for pinid_a in pin.find_all("a","PinImage ImgLink"):
+                        pinid = pinid_a['href']
+                        # userid=userlist[a]
+                        userid = boardlist[a].split('/')[1]
+                        board=boardlist[a]
+                        for clearfix in pin.find_all("div","convo attribution clearfix"):
+                            for link in clearfix.find_all("a"):
+                                source = link['href']
+	                        # remove sources that are None or Empty
+	                        if source != "None" and source != '':
+	                            key = userid+'-'+source
+	                            if key not in pindict:
+	                                pindict[key] = (pinid,board,userid,source)
+                                        pinids.append(pinid)
+            crawledboards[boardlist[a]] = 1			
+        else:
+            print "Boardlist already in crawled boards; something went terribly wrong"
     #How to return pindict to use in Main??
     #Returning pinids, couldn't extract pinids from dict to use in getboards
     print "Number of Pinids: " + str(len(pinids))
@@ -105,37 +113,42 @@ def getpins(boardlist, crawledboards):
 
 
 # get boards from pins - it takes a while!
-def getboards(pinids, crawledboards):
-        #Only using first 50 instead of len(pinids) - for now.
-    	for k in range(0,50):
-		pinpages=urllib.urlopen(pinurl+pinids[k])
-		# test whether more than 0.1 second has passed
-        	start=time.time()
-		elapsed = time.time() - start
-        	if elapsed > 0.1:
-                	time.sleep(0.1)
-        	start = time.time()
-		pinpage=pinpages.read()
-		soup=BeautifulSoup(pinpage)
-		for spin in soup.find_all("span","repin_post_attr"):
-			newuserid=spin.a.next_sibling.next_sibling['href'].split('/')[3]
-			newboard=spin.a.next_sibling.next_sibling['href'].split('/')[4]
-			newboardname="/"+newuserid+"/"+newboard+"/"
-			#check if newboard is in crawledboards
-			s="\n".join(crawledboards)
-			if not newboardname in s:
-				newboardlist.append(newboardname)
-        print "Number of NewBoards: " + str(len(newboardlist))
-   	return newboardlist
+def getboards(pinids):
+    #Only using first 50 instead of len(pinids) - for now.
+    for k in range(0,50):
+        pinpages=urllib.urlopen(pinurl+pinids[k])
+
+        # test whether more than 0.1 second has passed
+        start=time.time()
+        elapsed = time.time() - start
+        if elapsed > 0.1:
+            time.sleep(0.1)
+        start = time.time()
+
+        pinpage=pinpages.read()
+        soup=BeautifulSoup(pinpage)
+        for spin in soup.find_all("span","repin_post_attr"):
+            # remove http://pinterest.com
+            fullboardname = spin.a.next_sibling.next_sibling['href']
+            newboardname = fullboardname[len("http://pinterest.com"):]
+            # check if keywords in newboardname
+            
+            #check if newboard is in crawledboards
+            if newboardname not in crawledboards:
+                newboardlist.append(newboardname)
+    print "Number of NewBoards: " + str(len(newboardlist))
+    return newboardlist
 
 
 if __name__=="__main__":
     boardlist = getinitial()
-    pinids=getpins(boardlist,crawledboards)
-    newboardlist=getboards(pinids,crawledboards)
+    pinids = getpins(boardlist)
 
     # loop N times between getpins and getboards
-    pindict = getpins(boardlist, crawledboards, pindict)
+    newboardlist = getboards(pinids)
+    pinids = getpins(newboardlist)
+
+    # pindict = getpins(boardlist, crawledboards, pindict)
     # extract pins from dictionary
 
 
