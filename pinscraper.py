@@ -14,10 +14,12 @@ boardpgurl = "http://pinterest.com/search/boards/?q="+searchword+"&page="
 # initialize arrays
 boardlist=[]
 userlist = []
+newboardlist=[]
+crawledboards=[]
+pinids=[]
 
 pindict = {}
 
-start = time.time()
 
 # Get initial boards from search
 def getinitial():
@@ -26,6 +28,7 @@ def getinitial():
         print "opening board list " + str(bpage)
         boardpg = urllib.urlopen(boardpgurl+str(bpage))
         # test whether more than 0.5 second has passed
+        start=time.time()
         elapsed = time.time() - start
         if elapsed > 0.5:
             time.sleep(0.5)
@@ -50,6 +53,7 @@ def getpins(boardlist, crawledboards):
     for a in range(0,len(boardlist)):
 	firstpg = urllib.urlopen(pinurl + "/" + boardlist[a])
         # test whether more than 0.1 second has passed
+        start = time.time()
         elapsed = time.time() - start
         if elapsed > 0.1:
             time.sleep(0.1)
@@ -93,22 +97,42 @@ def getpins(boardlist, crawledboards):
                             key = userid+'-'+source
                             if key not in pindict:
                                 pindict[key] = (pinid,board,userid,source)
-    return pindict
+                                pinids.append(pinid)
+    #How to return pindict to use in Main??
+    #Returning pinids, couldn't extract pinids from dict to use in getboards
+    print "Number of Pinids: " + str(len(pinids))
+    return pinids
 
 
-# get boards from pins
+# get boards from pins - it takes a while!
 def getboards(pinids, crawledboards):
-    # for each pin id
-    for pinid in pinids:
-        # get boards
-        openfile = blah
-        # check if in crawledboards
-        
-
+        #Only using first 50 instead of len(pinids) - for now.
+    	for k in range(0,50):
+		pinpages=urllib.urlopen(pinurl+pinids[k])
+		# test whether more than 0.1 second has passed
+        	start=time.time()
+		elapsed = time.time() - start
+        	if elapsed > 0.1:
+                	time.sleep(0.1)
+        	start = time.time()
+		pinpage=pinpages.read()
+		soup=BeautifulSoup(pinpage)
+		for spin in soup.find_all("span","repin_post_attr"):
+			newuserid=spin.a.next_sibling.next_sibling['href'].split('/')[3]
+			newboard=spin.a.next_sibling.next_sibling['href'].split('/')[4]
+			newboardname="/"+newuserid+"/"+newboard+"/"
+			#check if newboard is in crawledboards
+			s="\n".join(crawledboards)
+			if not newboardname in s:
+				newboardlist.append(newboardname)
+        print "Number of NewBoards: " + str(len(newboardlist))
+   	return newboardlist
 
 
 if __name__=="__main__":
     boardlist = getinitial()
+    pinids=getpins(boardlist,crawledboards)
+    newboardlist=getboards(pinids,crawledboards)
 
     # loop N times between getpins and getboards
     pindict = getpins(boardlist, crawledboards, pindict)
