@@ -23,7 +23,7 @@ pindict = {}
 
 # Get initial boards from search
 def getinitial():
-    nboardpages=1
+    nboardpages=2
     for bpage in range(1,nboardpages+1):
         print "opening board list " + str(bpage)
         # insert try / except clause
@@ -60,13 +60,12 @@ def getinitial():
 def getpins(boardlist):
     pinids=[]
     # for testing purposes
-    if len(boardlist) > 10:
-        x=10
+    if len(boardlist) > 50:
+        x=50
     else:
         x=len(boardlist)
     # for a in range(0,len(boardlist)):
     for a in range(0,x):
-		# insert try / except clause
         try:
             firstpg = urllib.urlopen(pinurl + "/" + boardlist[a])
         except IOError, e:
@@ -96,7 +95,6 @@ def getpins(boardlist):
                 crawledboards[boardlist[a]] = 0
                 npage=int(npages)
                 for i in range(1,npage+2):
-                    # insert try / except clause
                     try:
                         pages=urllib.urlopen(pinurl+"/"+boardlist[a]+"?page="+str(i))
                     except IOError, e:
@@ -143,13 +141,12 @@ def getpins(boardlist):
 def getboards(pinids):
     newboardlist=[]
     # for testing purposes
-    if len(pinids) > 100:
-        x=100
+    if len(pinids) > 2000:
+        x=2000
     else:
         x=len(pinids)
     #Only using first 100 instead of len(pinids) - for now.
     for k in range(0,x):
-        # insert try / except clause
         try:
             pinpages=urllib.urlopen(pinurl+pinids[k])
         except IOError, e:
@@ -176,7 +173,7 @@ def getboards(pinids):
                 for c in keywords:
                     if c in newboardname:
             		#check if newboard is in crawledboards
-                        if newboardname not in crawledboards:
+                        if newboardname not in crawledboards and newboardname not in newboardlist:
                             newboardlist.append(newboardname)
     print "Number of NewBoards: " + str(len(newboardlist))
     return newboardlist
