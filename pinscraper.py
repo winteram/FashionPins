@@ -60,12 +60,12 @@ def getinitial():
 def getpins(boardlist):
     pinids=[]
     # for testing purposes
-    if len(boardlist) > 50:
-        x=50
-    else:
-        x=len(boardlist)
-    # for a in range(0,len(boardlist)):
-    for a in range(0,x):
+#    if len(boardlist) > 50:
+#        x=50
+#    else:
+#        x=len(boardlist)
+    for a in range(0,len(boardlist)):
+#    for a in range(0,x):
         try:
             firstpg = urllib.urlopen(pinurl + "/" + boardlist[a])
         except IOError, e:
@@ -141,12 +141,13 @@ def getpins(boardlist):
 def getboards(pinids):
     newboardlist=[]
     # for testing purposes
-    if len(pinids) > 2000:
-        x=2000
-    else:
-        x=len(pinids)
+#    if len(pinids) > 2000:
+#        x=2000
+#    else:
+#        x=len(pinids)
     #Only using first 100 instead of len(pinids) - for now.
-    for k in range(0,x):
+#    for k in range(0,x):
+    for k in range(0,len(pinids)):
         try:
             pinpages=urllib.urlopen(pinurl+pinids[k])
         except IOError, e:
@@ -182,8 +183,8 @@ def getboards(pinids):
 if __name__=="__main__":
     boardlist = getinitial()
     pinids = getpins(boardlist)
-    # loop N times between getpins and getboards
-    for h in range(1,3):
+    # loop 6 times between getpins and getboards
+    for h in range(1,6):
         newboardlist = getboards(pinids)
         pinids = getpins(newboardlist)
     # pindict = getpins(boardlist, crawledboards, pindict)
