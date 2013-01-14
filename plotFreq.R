@@ -1,0 +1,20 @@
+#setwd("/Users/winteram/Documents/Research/FashionPins")
+
+library(ggplot2)
+theme_set(theme_bw())
+
+pin.srcs <- read.csv("frequency.csv", header=FALSE)
+names(pin.srcs) <- c("Source","Freq")
+
+ggplot(pin.srcs, aes(x=Freq)) + geom_histogram(color="black", fill="white") + scale_y_log10()
+
+simmat <- read.csv("simmat.csv", header=TRUE)
+simmat2 <- read.csv("simmat2.csv", header=TRUE)
+simmat.mat <- as.matrix(simmat2)
+c <- simmat.mat %*% t(simmat.mat)  # N x M * M x N
+d <- t(simmat.mat) %*% simmat.mat  # M x N * N x M
+kmd <- kmeans(d,3)
+clusters <- kmd$cluster
+
+pc.cr <- princomp(c)
+plot(pc.cr)
