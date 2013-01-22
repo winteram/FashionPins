@@ -1,6 +1,7 @@
 #setwd("/Users/winteram/Documents/Research/FashionPins")
 
 library(ggplot2)
+library(cluster)
 theme_set(theme_bw())
 
 pin.srcs <- read.csv("frequency.csv", header=FALSE)
@@ -15,6 +16,8 @@ c <- simmat.mat %*% t(simmat.mat)  # N x M * M x N
 d <- t(simmat.mat) %*% simmat.mat  # M x N * N x M
 kmd <- kmeans(d,3)
 clusters <- kmd$cluster
+clusplot(d, clusters, cor=FALSE, color=TRUE, shade=TRUE, labels=2, lines=0)
 
 pc.cr <- princomp(c)
 plot(pc.cr)
+
