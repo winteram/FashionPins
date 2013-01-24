@@ -181,17 +181,27 @@ def getboards(pinids):
 
 
 if __name__=="__main__":
-    boardlist = getinitial()
+    
+    # open allboards.csv
+    try:
+        fb = open("allboards.csv","a+")
+    except IOError:
+        print "Error opening allboards.csv"
+        exit(0)
+    else:
+        # get boards that have been written (if any)
+        for line in fb:
+            boardlist.append(line)
+        boardwriter = UnicodeWriter(fb)
+        # otherwise get initial boards
+        if len(boardlist) == 0:
+            boardlist = getinitial()
+    fp = open("allpins.csv","w")
+    pinwriter = UnicodeWriter(fp)
     pinids = getpins(boardlist)
-    # loop 6 times between getpins and getboards
+    # loop until #users > 100k or #sources > 500k
     for h in range(1,6):
         newboardlist = getboards(pinids)
         pinids = getpins(newboardlist)
-    # pindict = getpins(boardlist, crawledboards, pindict)
-    # extract pins from dictionary
-    allpins = pindict.values()
-    allpins.sort(key=lambda tup: tup[3])
-    f = open("allpins.csv","w")
-    writer = UnicodeWriter(f)
-    writer.writerows(allpins)
-    f.close()
+    pinwriter.writerows(allpins)
+    fp.close()
