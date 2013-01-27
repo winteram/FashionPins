@@ -1,4 +1,4 @@
-import urllib
+import urllib2
 import re
 import sys
 from bs4 import BeautifulSoup
@@ -42,7 +42,9 @@ def getinitial(boardwriter):
 
         # try to open search page
         try:
-            boardpg = urllib.urlopen(boardpgurl+str(bpage))
+			opener = urllib2.build_opener()
+			opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+			boardpg = opener.open(boardpgurl+str(bpage))
         except IOError, e:
            if hasattr(e, 'reason'):
                print 'We failed to reach a server.'
@@ -90,7 +92,7 @@ def getpins(boardlist, pinwriter):
 
             # open pins in board
             try:
-                firstpg = urllib.urlopen(pinurl + "/" + boardlist[a])
+                firstpg = urllib2.urlopen(pinurl + "/" + boardlist[a])
             except IOError, e:
                 if hasattr(e, 'reason'):
                     print 'We failed to reach a server.'
@@ -124,7 +126,7 @@ def getpins(boardlist, pinwriter):
 
                     # open pin page i
                     try:
-                        pages=urllib.urlopen(pinurl+"/"+boardlist[a]+"?page="+str(i))
+                        pages=urllib2.urlopen(pinurl+"/"+boardlist[a]+"?page="+str(i))
                     except IOError, e:
                         if hasattr(e, 'reason'):
                             print 'We failed to reach a server.'
@@ -190,7 +192,7 @@ def getboards(pinids, boardwriter):
         
         # open pin page to get list of pinned boards
         try:
-            pinpages=urllib.urlopen(pinurl+pinids[k])
+            pinpages=urllib2.urlopen(pinurl+pinids[k])
         except IOError, e:
             if hasattr(e, 'reason'):
                 print 'We failed to reach a server.'
