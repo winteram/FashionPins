@@ -64,7 +64,7 @@ def getinitial(boardwriter):
                     for a_name in h3_name("a"):
                         board_name=a_name['href']
                         boardlist.append(board_name)
-                        boardwriter.writerow(board_name)
+                        boardwriter.writerow([board_name])
     print "Number of initial boards: "+str(len(boardlist))
     return boardlist
 
@@ -92,7 +92,9 @@ def getpins(boardlist, pinwriter):
 
             # open pins in board
             try:
-                firstpg = urllib2.urlopen(pinurl + "/" + boardlist[a])
+				opener = urllib2.build_opener()
+				opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+				firstpg = opener.open((pinurl + boardlist[a]).rstrip())
             except IOError, e:
                 if hasattr(e, 'reason'):
                     print 'We failed to reach a server.'
@@ -126,7 +128,7 @@ def getpins(boardlist, pinwriter):
 
                     # open pin page i
                     try:
-                        pages=urllib2.urlopen(pinurl+"/"+boardlist[a]+"?page="+str(i))
+                        pages=urllib2.urlopen((pinurl + boardlist[a]).rstrip()+"?page="+str(i))
                     except IOError, e:
                         if hasattr(e, 'reason'):
                             print 'We failed to reach a server.'
@@ -213,7 +215,7 @@ def getboards(pinids, boardwriter):
             		#check if newboard is in crawledboards
                         if newboardname not in crawledboards and newboardname not in newboardlist:
                             newboardlist.append(newboardname)
-                            boardwriter.writerow(newboardname)
+                            boardwriter.writerow([newboardname])
     print "Number of NewBoards: " + str(len(newboardlist))
     return newboardlist
 
@@ -222,7 +224,7 @@ if __name__=="__main__":
     
     # open allboards.csv
     try:
-        fb = open("allboards.csv","a+")
+        fb = open("allboards.csv","r+")
     except IOError:
         print "Error opening allboards.csv"
         sys.exit(0)
@@ -239,7 +241,7 @@ if __name__=="__main__":
 
     # open allpins.csv for writing
     try:
-        fp = open("allpins.csv","a+")
+        fp = open("allpins.csv","r+")
     except IOError:
         print "Error opening allpins.csv"
         sys.exit(0)
