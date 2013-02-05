@@ -10,4 +10,27 @@ network = pylast.LastFMNetwork(api_key = API_KEY, api_secret =
 
 # now you can use that object every where
 artist = network.get_artist("System of a Down")
-shouts = artist.getShouts()
+# get number of shouts for an artist
+shouts = artist.get_shouts(limit=50)
+
+# get listener count of an artist
+listenercount=artist.get_listener_count()
+# get playcount of an artist
+playcount=artist.get_playcount()
+
+# get similar artists to a certain artist
+simartists=artist.get_similar()
+#for simartist in simartists:
+    #print simartist.item.get_name()
+
+
+# get top tags of a track
+track = network.get_track("Billie Holiday", "All of Me")
+topItems = track.get_top_tags(limit=None)
+#for topItem in topItems:
+    #print topItem.item.get_name(), topItem.weight
+
+# get topfans of a track
+topfans=track.get_top_fans(limit=None)
+#for topfan in topfans:
+    #print topfan.item.get_name()
