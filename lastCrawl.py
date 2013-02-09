@@ -5,32 +5,51 @@ API_SECRET = '96f5ba11b4313fca6a34b65bba5c5843'
 username = 'culturalcluster'
 password_hash = pylast.md5("W1nter0zturk")
 
-network = pylast.LastFMNetwork(api_key = API_KEY, api_secret = 
+network = pylast.LastFMNetwork(api_key = API_KEY, api_secret =
     API_SECRET, username = username, password_hash = password_hash)
 
-# now you can use that object every where
-artist = network.get_artist("System of a Down")
-# get number of shouts for an artist
-shouts = artist.get_shouts(limit=50)
+tracklib={}
+trackar=[]
+fans=[]
 
-# get listener count of an artist
-listenercount=artist.get_listener_count()
-# get playcount of an artist
-playcount=artist.get_playcount()
+fanlib={}
 
-# get similar artists to a certain artist
-simartists=artist.get_similar()
-#for simartist in simartists:
-    #print simartist.item.get_name()
+inartists=['Billie Holiday','Charles Aznavour']
+# get initial top 100 artists and their top 2 tracks and topfans of those 2 tracks
+for y in range(0,len(inartists)):
+    artist = network.get_artist(inartists[y])
+    top_tracks=artist.get_top_tracks()
+    trackar=[]
+    for i in range(0,2):
+        for top_track in top_tracks:
+            trackar.append(top_track.item.get_name())
+            tkey=str(artist)+'-'+trackar[i]
+            if tkey not in tracklib:
+                tracklib[tkey]=1
 
 
-# get top tags of a track
-track = network.get_track("Billie Holiday", "All of Me")
-topItems = track.get_top_tags(limit=None)
-#for topItem in topItems:
-    #print topItem.item.get_name(), topItem.weight
+for item in tracklib:
+    lartist=item.split('-')[0]
+    ltrack=item.split('-')[1]
+    track=network.get_track(lartist,ltrack)
+    topfans=track.get_top_fans(limit=1)
+    for topfan in topfans:
+        name=topfan.item.get_name()
+        if name not in fans:
+            fans.append(name)
+        
 
-# get topfans of a track
-topfans=track.get_top_fans(limit=None)
-#for topfan in topfans:
-    #print topfan.item.get_name()
+#get top tracks of fans
+for a in range(0,len(fans)):
+    fan=network.get_user(fans[a])
+    topfantracks=fan.get_top_tracks()
+    for topfantrack in topfantracks:
+        track=topfantrack.item.get_name()
+        artist=topfantrack.item.get_artist().get_name()
+# I am running to a unicode problem here when trying to concatenate the track name and user name; I've tried unicode and .decode('utf-8')
+        key=str(track)+'-'+str(track)+'-'+fans[a]
+        print key
+        if key not in fanlib:
+            fanlib[key]=1
+
+
