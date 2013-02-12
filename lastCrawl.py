@@ -1,5 +1,6 @@
 import pylast
 import csv
+import pymysql
 
 API_KEY = '8b2fa4cb683e168f66f47adcc708ad22'
 API_SECRET = '96f5ba11b4313fca6a34b65bba5c5843'
@@ -8,6 +9,10 @@ password_hash = pylast.md5("W1nter0zturk")
 
 network = pylast.LastFMNetwork(api_key = API_KEY, api_secret =
     API_SECRET, username = username, password_hash = password_hash)
+
+conn = pymysql.connect(host='wmason.mgnt.stevens-tech.edu', port=3306, user='culturalcluster', passwd='W1nter0zturk', db='ccdb')
+cur = conn.cursor()
+
 
 tracklib={}
 trackar=[]
@@ -20,11 +25,14 @@ fanlib={}
 # get initial top 100 artists and their top 2 tracks
 def getartist():
     artistlist=artistlist = csv.reader(open("TopArtists.csv", "rb"))
-    inartists = []
     for data in artistlist:
-        inartists.append(data[0])
+        cur.execute('INSERT INTO artist SET artist_name="%s"' % data[0])
     #print inartists
-    return inartists
+    cur.execute("SELECT * FROM artist")
+    artists = cur.fetchall()
+    for artist in artists:
+        print artist
+    return True
 
 # get initial artists top 2 songs and the fans
 def getinitial(inartists):
@@ -64,18 +72,22 @@ def topfans(tracks):
         ltrack=tracks[b].split('-')[1]  
         
         # Got an error of "Track not found" so thought this might work, it doesn't.
-        if type(network.get_track(lartist,ltrack)) == None:
-            print "Track Not Found"     
-            
-        else:
+        try:
             track=network.get_track(lartist,ltrack)
+        except:
+            print "track error"
+        else:
             #print track
             # Change the number of top fans here - if limit=None, returns 50
-            topfans=track.get_top_fans(limit=1)
-            for topfan in topfans:
-                name=topfan.item.get_name()
-                if name not in fans:
-                    fans.append(name)
+            try:
+            	topfans=track.get_top_fans(limit=1)
+            except:
+                print "fans error"
+            else:
+            	for topfan in topfans:
+                    name=topfan.item.get_name()
+                    if name not in fans:
+                    	fans.append(name)
                 
     print "Number of fans: " +str(len(fans))
     #print fans
@@ -102,11 +114,11 @@ def toptracks(fans):
 
 
 if __name__=="__main__":
-    #inartists=getartist()
-    inartists=['Maroon 5']
-    tracklib=getinitial(inartists)
-    for z in range(0,2):     
-        tracks,fanlib=toptracks(fans)
-        fans=topfans(tracks)
+    inartists=getartist()
+    #inartists=['Maroon 5']
+    #tracklib=getinitial(inartists)
+    #for z in range(0,2):     
+    #    tracks,fanlib=toptracks(fans)
+    #   fans=topfans(tracks)
     
 
