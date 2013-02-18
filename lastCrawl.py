@@ -10,10 +10,6 @@ password_hash = pylast.md5("W1nter0zturk")
 network = pylast.LastFMNetwork(api_key = API_KEY, api_secret =
     API_SECRET, username = username, password_hash = password_hash)
 
-conn = pymysql.connect(host='wmason.mgnt.stevens-tech.edu', port=3306, user='culturalcluster', passwd='W1nter0zturk', db='ccdb')
-cur = conn.cursor()
-
-
 tracklib={}
 trackar=[]
 fans=[]
@@ -23,19 +19,20 @@ fanlib={}
 
 
 # get initial top 100 artists and their top 2 tracks
-def getartist():
+def getartist(cur):
     artistlist= csv.reader(open("TopArtists.csv", "rb"))
     inartists=[]
     for data in artistlist:
         inartists.append(data[0])    
-    #print inartists
-    cur.execute("TRUNCATE Tracks")
-    cur.execute("TRUNCATE User")
-    cur.execute("TRUNCATE user_listens_tracks")
+#    print inartists
+    cur.execute("TRUNCATE Tracks;")
+    cur.execute("TRUNCATE User;")
+    cur.execute("TRUNCATE user_listens_tracks;")
+    conn.commit()
     return inartists
 
 # get initial artists top 2 songs and the fans
-def getinitial(inartists):
+def getinitial(inartists, cur):
 ##for y in range(0,len(inartists)):
     for y in range(0,1):
         artist = network.get_artist(inartists[y])
@@ -47,14 +44,16 @@ def getinitial(inartists):
                 tkey=str(artist)+'-'+trackar[i]
                 if tkey not in tracklib:
                     tracklib[tkey]=1
-    print tracklib
+#    print tracklib
     for item in tracklib:
         lartist=item.split('-')[0]
         ltrack=item.split('-')[1]
-        sql="INSERT INTO Tracks(track_name,artist_name) VALUES ('%s','%s')" % (ltrack,lartist)
+        print (ltrack, lartist)
+        sql="INSERT INTO Tracks (is_crawled,track_name,artist_name) VALUES (0,'%s','%s')" % (ltrack,lartist)
         cur.execute(sql)
         cur.execute("SELECT LAST_INSERT_ID()")
         trackid=str(cur.fetchone()[0])
+        conn.commit()
         #print trackid
         try:
             track=network.get_track(lartist,ltrack)
@@ -75,7 +74,8 @@ def getinitial(inartists):
                     cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (userid,trackid))
                     print name + '-'+lartist +'-'+ ltrack
                     #print artistid
-                    cur.execute("UPDATE Tracks SET is_crawled='1' WHERE track_name='%s' AND artist_name='%s'" % (ltrack,lartist))
+                cur.execute("UPDATE Tracks SET is_crawled='1' WHERE track_name='%s' AND artist_name='%s'" % (ltrack,lartist))
+                conn.commit()
 ##    cur.execute("SELECT * FROM User")
 ##    user=cur.fetchall()
 ##    print user
@@ -181,13 +181,17 @@ def topfans():
 
 
 if __name__=="__main__":
-    inartists=getartist()
-    tracklib=getinitial(inartists)
-    tracks=toptracks()
-    fans=topfans()
+    conn = pymysql.connect(host='wmason.mgnt.stevens-tech.edu', port=3306, user='culturalcluster', passwd='W1nter0zturk', db='ccdb')
+    cur = conn.cursor()
+
+    inartists=getartist(cur)
+    tracklib=getinitial(inartists, cur)
+    #tracks=toptracks()
+    #fans=topfans()
 
     #for z in range(0,2):     
     #    tracks,fanlib=toptracks(fans)
     #   fans=topfans(tracks)
-    
+    cur.close()
+    conn.close()
 
