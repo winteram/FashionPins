@@ -24,99 +24,168 @@ fanlib={}
 
 # get initial top 100 artists and their top 2 tracks
 def getartist():
-    artistlist=artistlist = csv.reader(open("TopArtists.csv", "rb"))
+    artistlist= csv.reader(open("TopArtists.csv", "rb"))
+    inartists=[]
     for data in artistlist:
-        cur.execute('INSERT INTO artist SET artist_name="%s"' % data[0])
+        inartists.append(data[0])    
     #print inartists
-    cur.execute("SELECT * FROM artist")
-    artists = cur.fetchall()
-    for artist in artists:
-        print artist
-    return True
+    cur.execute("TRUNCATE Tracks")
+    cur.execute("TRUNCATE User")
+    cur.execute("TRUNCATE user_listens_tracks")
+    return inartists
 
 # get initial artists top 2 songs and the fans
 def getinitial(inartists):
-    for y in range(0,len(inartists)):
+##for y in range(0,len(inartists)):
+    for y in range(0,1):
         artist = network.get_artist(inartists[y])
         top_tracks=artist.get_top_tracks()
         trackar=[]
-        for i in range(0,2):
+        for i in range(0,1):
             for top_track in top_tracks:
                 trackar.append(top_track.item.get_name())
                 tkey=str(artist)+'-'+trackar[i]
                 if tkey not in tracklib:
                     tracklib[tkey]=1
-        for item in tracklib:
-            lartist=item.split('-')[0]
-            ltrack=item.split('-')[1]  
-            if type(network.get_track(lartist,ltrack)) == None:
-                print "Track Not Found"          
-            else:
-                track=network.get_track(lartist,ltrack)
-                # Change the number of top fans here - if limit=None, returns 50
-                topfans=track.get_top_fans(limit=1)
-                for topfan in topfans:
-                    name=topfan.item.get_name()
-                    if name not in fans:
-                        fans.append(name)
-    print "Number of initial tracks: " +str(len(tracklib))
-    print "Number of fans of the initial tracks: " +str(len(fans))
-    #print tracklib
-    return fans
-
-# get topfans of tracks
-def topfans(tracks):
-    fans=[]
-    for b in range(len(tracks)):
-        lartist=tracks[b].split('-')[0]
-        ltrack=tracks[b].split('-')[1]  
-        
-        # Got an error of "Track not found" so thought this might work, it doesn't.
+    print tracklib
+    for item in tracklib:
+        lartist=item.split('-')[0]
+        ltrack=item.split('-')[1]
+        sql="INSERT INTO Tracks(track_name,artist_name) VALUES ('%s','%s')" % (ltrack,lartist)
+        cur.execute(sql)
+        cur.execute("SELECT LAST_INSERT_ID()")
+        trackid=str(cur.fetchone()[0])
+        #print trackid
         try:
             track=network.get_track(lartist,ltrack)
         except:
+            print "Track Error"
+        else:
+            cur.execute("SELECT is_crawled FROM Tracks WHERE track_name='%s' AND artist_name='%s'" % (ltrack,lartist))
+            is_crawled=str(cur.fetchone()[0])
+            print is_crawled
+            if is_crawled == '0':
+            # Change the number of top fans here - if limit=None, returns 50
+                topfans=track.get_top_fans(limit=1)
+                for topfan in topfans:
+                    name=topfan.item.get_name()
+                    cur.execute('INSERT INTO User SET user_name="%s"' % (name))
+                    cur.execute("SELECT LAST_INSERT_ID()")
+                    userid=str(cur.fetchone()[0])
+                    cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (userid,trackid))
+                    print name + '-'+lartist +'-'+ ltrack
+                    #print artistid
+                    cur.execute("UPDATE Tracks SET is_crawled='1' WHERE track_name='%s' AND artist_name='%s'" % (ltrack,lartist))
+##    cur.execute("SELECT * FROM User")
+##    user=cur.fetchall()
+##    print user
+##    cur.execute("SELECT * FROM Tracks")
+##    tracks=cur.fetchall()
+##    print tracks
+##    cur.execute("SELECT * FROM user_listens_tracks")
+##    listens=cur.fetchall()
+##    print listens                                                                                                            
+    return True
+
+#get top tracks of fans - returns top 50 tracks
+def toptracks():
+    sqlfan="SELECT user_name FROM User WHERE is_crawled='0'"
+    cur.execute(sqlfan)
+    users=cur.fetchall()
+    for item in users:
+        cur.execute("SELECT userid FROM User WHERE user_name='%s'" % item)
+        userid=str(cur.fetchone()[0])
+        print userid
+        fan=network.get_user(str(item[0]))
+        topfantracks=fan.get_top_tracks()
+        for topfantrack in topfantracks:
+            track=topfantrack.item.get_name()
+            track_name=track.encode('utf-8')
+            if len(track_name) > 255:
+                track_name = track_name[:255]
+            artist=topfantrack.item.get_artist().get_name()
+            artist_name=artist.encode('utf-8')
+            cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=%s AND artist_name=%s" , (track_name,artist_name))
+            if cur.fetchone()[0]==1:
+                print track_name + ' - ' +artist_name + ' -'+' Track already exists'
+            else:
+                cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (%s,%s)" , (track_name,artist_name))
+                track=cur.execute("SELECT LAST_INSERT_ID()")
+                trackid=str(cur.fetchone()[0])
+                #print trackid
+                cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (userid,trackid))
+                cur.execute("UPDATE User SET is_crawled='1' WHERE user_name='%s'" % item[0])             
+##    cur.execute("SELECT * FROM User")
+##    user=cur.fetchall()
+##    print user
+##    cur.execute("SELECT * FROM Tracks")
+##    tracks=cur.fetchall()
+##    print tracks
+##    cur.execute("SELECT * FROM user_listens_tracks")
+##    listens=cur.fetchall()
+##    print listens 
+    return True
+        
+### get topfans of tracks
+def topfans():
+    sqltracks="SELECT track_name, artist_name FROM Tracks WHERE is_crawled='0'"
+    cur.execute(sqltracks)
+    tracks=cur.fetchall()
+    #print tracks
+    for item in tracks:
+        track_name=item[0]
+        if len(track_name) > 255:
+            track_name = track_name[:255]
+        artist_name=item[1]
+        cur.execute("SELECT trackid FROM Tracks WHERE track_name=%s AND artist_name=%s" , (track_name,artist_name))
+        trackid=str(cur.fetchone()[0])
+        #print trackid+ '-' + 'trackname: ' + track_name + ' artistname: ' + artist_name
+        try:
+            track=network.get_track(artist_name,track_name)
+        except:
             print "track error"
         else:
-            #print track
             # Change the number of top fans here - if limit=None, returns 50
             try:
             	topfans=track.get_top_fans(limit=1)
             except:
                 print "fans error"
             else:
-            	for topfan in topfans:
+                for topfan in topfans:
                     name=topfan.item.get_name()
-                    if name not in fans:
-                    	fans.append(name)
-                
-    print "Number of fans: " +str(len(fans))
-    #print fans
-    return fans
+                    cur.execute("SELECT COUNT(1) FROM User WHERE user_name=%s" , name)
+                    #print name
+                    if cur.fetchone()[0]==1:
+                        print name + ' -'+' User already exists--------'
+                    else:
+                        #print 'go ahead add'
+                        cur.execute('INSERT INTO User SET user_name="%s"' % (name))
+                        cur.execute("SELECT LAST_INSERT_ID()")
+                        userid=str(cur.fetchone()[0])
+                        cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (userid,trackid))
+                        #print name + '-'+artist_name +'-'+ track_name
+                        #print artistid
+                        cur.execute("UPDATE Tracks SET is_crawled='1' WHERE track_name=%s AND artist_name=%s" , (track_name,artist_name))
+##    cur.execute("SELECT * FROM User")
+##    user=cur.fetchall()
+##    print user
+##    cur.execute("SELECT * FROM Tracks")
+##    tracks=cur.fetchall()
+##    print tracks
+##    cur.execute("SELECT * FROM user_listens_tracks")
+##    listens=cur.fetchall()
+##    print listens
+    return True
 
-#get top tracks of fans - returns top 50 tracks
-def toptracks(fans):
-    tracks=[]
-    for a in range(0,len(fans)):
-        fan=network.get_user(fans[a])
-        topfantracks=fan.get_top_tracks()
-        for topfantrack in topfantracks:
-            track=topfantrack.item.get_name()
-            track_name=track.encode('utf-8')
-            artist=topfantrack.item.get_artist().get_name()
-            artist_name=artist.encode('utf-8')
-            tracks.append(str(artist_name)+'-'+str(track_name))
-            key=unicode(str(artist_name),'utf-8')+'-'+unicode(str(track_name),'utf-8')+'-'+fans[a]
-            if key not in fanlib:
-                fanlib[key]=1
-    print "Number of new tracks: " +str(len(tracks))
-    print "Number of fanlib: " +str(len(fanlib))
-    return tracks,fanlib
+
 
 
 if __name__=="__main__":
     inartists=getartist()
-    #inartists=['Maroon 5']
-    #tracklib=getinitial(inartists)
+    tracklib=getinitial(inartists)
+    tracks=toptracks()
+    fans=topfans()
+
     #for z in range(0,2):     
     #    tracks,fanlib=toptracks(fans)
     #   fans=topfans(tracks)
