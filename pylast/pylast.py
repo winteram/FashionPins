@@ -933,6 +933,7 @@ SimilarItem = collections.namedtuple("SimilarItem", ["item", "match"])
 LibraryItem = collections.namedtuple("LibraryItem", ["item", "playcount", "tagcount"])
 PlayedTrack = collections.namedtuple("PlayedTrack", ["track", "playback_date", "timestamp"])
 LovedTrack = collections.namedtuple("LovedTrack", ["track", "date", "timestamp"])
+BannedTrack = collections.namedtuple("BannedTrack", ["track", "date", "timestamp"])
 ImageSizes = collections.namedtuple("ImageSizes", ["original", "large", "largesquare", "medium", "small", "extralarge"])
 Image = collections.namedtuple("Image", ["title", "url", "dateadded", "format", "owner", "sizes", "votes"])
 Shout = collections.namedtuple("Shout", ["body", "author", "date"])
@@ -2833,6 +2834,36 @@ class User(_BaseObject):
             seq.append(LovedTrack(Track(artist, title, self.network), date, timestamp))
         
         return seq
+
+    
+    def get_banned_tracks(self, limit=50):
+        """Returns this user's banned track as a sequence of BannedTrack objects
+        in reverse order of their timestamp, all the way back to the first track.
+        
+        If limit==None, it will try to pull all the available data.
+        
+        This method uses caching. Enable caching only if you're pulling a
+        large amount of data.
+        
+        Use extract_items() with the return of this function to
+        get only a sequence of Track objects with no playback dates. """
+        
+        params = self._get_params()
+        if limit:
+            params['limit'] = limit
+        
+        seq = []
+        for track in _collect_nodes(limit, self, "user.getBannedTracks", True, params):
+                
+            title = _extract(track, "name")
+            artist = _extract(track, "name", 1)
+            date = _extract(track, "date")
+            timestamp = track.getElementsByTagName("date")[0].getAttribute("uts")
+                
+            seq.append(BannedTrack(Track(artist, title, self.network), date, timestamp))
+        
+        return seq
+
     
     def get_neighbours(self, limit = 50):
         """Returns a list of the user's friends."""
