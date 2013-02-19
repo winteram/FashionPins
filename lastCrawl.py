@@ -24,16 +24,16 @@ def getartist(cur):
     inartists=[]
     for data in artistlist:
         inartists.append(data[0])    
-#    print inartists
-    cur.execute("TRUNCATE Tracks;")
-    cur.execute("TRUNCATE User;")
-    cur.execute("TRUNCATE user_listens_tracks;")
+    #    print inartists
+    cur.execute("TRUNCATE Tracks")
+    cur.execute("TRUNCATE User")
+    cur.execute("TRUNCATE user_listens_tracks")
     conn.commit()
     return inartists
 
 # get initial artists top 2 songs and the fans
 def getinitial(inartists, cur):
-##for y in range(0,len(inartists)):
+    ##for y in range(0,len(inartists)):
     for y in range(0,1):
         artist = network.get_artist(inartists[y])
         top_tracks=artist.get_top_tracks()
@@ -46,7 +46,7 @@ def getinitial(inartists, cur):
                 tkey=str(artist)+'-'+trackar[i]
                 if tkey not in tracklib:
                     tracklib[tkey]=1
-#    print tracklib
+    # print tracklib
     for item in tracklib:
         lartist=item.split('-')[0]
         ltrack=item.split('-')[1]
@@ -99,6 +99,8 @@ def toptracks():
         userid=str(cur.fetchone()[0])
         print userid
         fan=network.get_user(str(item[0]))
+
+        # Get top listened tracks
         topfantracks=fan.get_top_tracks()
         for topfantrack in topfantracks:
             track=topfantrack.item.get_name()
@@ -116,7 +118,13 @@ def toptracks():
                 trackid=str(cur.fetchone()[0])
                 #print trackid
                 cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (userid,trackid))
-                cur.execute("UPDATE User SET is_crawled='1' WHERE user_name='%s'" % item[0])             
+        
+        # Get loved tracks
+
+        # Get banned tracks
+
+        cur.execute("UPDATE User SET is_crawled='1' WHERE user_name='%s'" % item[0])             
+        conn.commit()
 ##    cur.execute("SELECT * FROM User")
 ##    user=cur.fetchall()
 ##    print user
@@ -167,7 +175,8 @@ def topfans():
                         cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (userid,trackid))
                         #print name + '-'+artist_name +'-'+ track_name
                         #print artistid
-                        cur.execute("UPDATE Tracks SET is_crawled='1' WHERE track_name=%s AND artist_name=%s" , (track_name,artist_name))
+            cur.execute("UPDATE Tracks SET is_crawled='1' WHERE track_name=%s AND artist_name=%s" , (track_name,artist_name))
+            conn.commit()
 ##    cur.execute("SELECT * FROM User")
 ##    user=cur.fetchall()
 ##    print user
@@ -188,8 +197,8 @@ if __name__=="__main__":
 
     inartists=getartist(cur)
     tracklib=getinitial(inartists, cur)
-    #tracks=toptracks()
-    #fans=topfans()
+    tracks=toptracks()
+    fans=topfans()
 
     #for z in range(0,2):     
     #    tracks,fanlib=toptracks(fans)
