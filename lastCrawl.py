@@ -24,28 +24,35 @@ fanlib={}
 
 # get initial top 100 artists and their top 2 tracks
 def getartist():
-    artistlist=artistlist = csv.reader(open("TopArtists.csv", "rb"))
-    for data in artistlist:
-        cur.execute('INSERT INTO artist SET artist_name="%s"' % data[0])
-    #print inartists
-    cur.execute("SELECT * FROM artist")
-    artists = cur.fetchall()
-    for artist in artists:
+    artistlist = []
+    artistlist = csv.reader(open("TopArtists.csv", "rb"))
+    for artist in artistlist:
+        artistlist.append(artist)
         print artist
-    return True
+    return artistlist
 
 # get initial artists top 2 songs and the fans
 def getinitial(inartists):
     for y in range(0,len(inartists)):
         artist = network.get_artist(inartists[y])
         top_tracks=artist.get_top_tracks()
+        # Tracks table
         trackar=[]
         for i in range(0,2):
             for top_track in top_tracks:
+                # insert artist & trackname into tracks table
                 trackar.append(top_track.item.get_name())
                 tkey=str(artist)+'-'+trackar[i]
                 if tkey not in tracklib:
                     tracklib[tkey]=1
+
+		# SELECT * from Tracks where is_crawled=0
+		# for each track:
+		#	for each top_fan:
+		#		Insert into User set user-name=top_fan
+		#		userid = Select last_insert_id()
+		#		insert into user_listens_tracks, track['id'], userid;
+		#	update Tracks set is_crawled = 1 WHERE trackid=track['id']
         for item in tracklib:
             lartist=item.split('-')[0]
             ltrack=item.split('-')[1]  
@@ -58,6 +65,7 @@ def getinitial(inartists):
                 for topfan in topfans:
                     name=topfan.item.get_name()
                     if name not in fans:
+                        # insert into Users
                         fans.append(name)
     print "Number of initial tracks: " +str(len(tracklib))
     print "Number of fans of the initial tracks: " +str(len(fans))
