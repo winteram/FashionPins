@@ -27,7 +27,12 @@ def getartist(cur):
     #    print inartists
     cur.execute("TRUNCATE Tracks")
     cur.execute("TRUNCATE User")
+    cur.execute("TRUNCATE Tags")
     cur.execute("TRUNCATE user_listens_tracks")
+    cur.execute("TRUNCATE user_bans_tracks")
+    cur.execute("TRUNCATE user_loves_tracks")
+    cur.execute("TRUNCATE user_shouts_tracks")
+    cur.execute("TRUNCATE tracks_has_tags")
     conn.commit()
     return inartists
 
@@ -120,8 +125,42 @@ def toptracks():
                 cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (userid,trackid))
         
         # Get loved tracks
-
+        lovedtracks=fan.get_loved_tracks()
+        for lovedtrack in lovedtracks:
+            ltrack=lovedtrack.track.get_name()
+            ltrack_name=ltrack.encode('utf-8')
+            if len(ltrack_name) > 255:
+                ltrack_name = ltrack_name[:255]
+            lartist=lovedtrack.track.get_artist().get_name()
+            lartist_name=lartist.encode('utf-8')
+            cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=%s AND artist_name=%s" , (ltrack_name,lartist_name))
+            if cur.fetchone()[0]==1:
+                print ltrack_name + ' - ' +lartist_name + ' -'+' Track already exists'
+            else:
+                cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (%s,%s)" , (ltrack_name,lartist_name))
+                btrack=cur.execute("SELECT LAST_INSERT_ID()")
+                ltrackid=str(cur.fetchone()[0])
+                #print trackid
+                cur.execute("INSERT INTO user_loves_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (userid,ltrackid))
+                
         # Get banned tracks
+        bannedtracks=fan.get_banned_tracks()
+        for bannedtrack in bannedtracks:
+            btrack=bannedtrack.track.get_name()
+            btrack_name=btrack.encode('utf-8')
+            if len(btrack_name) > 255:
+                btrack_name = btrack_name[:255]
+            bartist=bannedtrack.track.get_artist().get_name()
+            bartist_name=bartist.encode('utf-8')
+            cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=%s AND artist_name=%s" , (btrack_name,bartist_name))
+            if cur.fetchone()[0]==1:
+                print btrack_name + ' - ' +bartist_name + ' -'+' Track already exists'
+            else:
+                cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (%s,%s)" , (btrack_name,bartist_name))
+                btrack=cur.execute("SELECT LAST_INSERT_ID()")
+                btrackid=str(cur.fetchone()[0])
+                #print trackid
+                cur.execute("INSERT INTO user_bans_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (userid,btrackid))
 
         cur.execute("UPDATE User SET is_crawled='1' WHERE user_name='%s'" % item[0])             
         conn.commit()
@@ -133,7 +172,13 @@ def toptracks():
 ##    print tracks
 ##    cur.execute("SELECT * FROM user_listens_tracks")
 ##    listens=cur.fetchall()
-##    print listens 
+##    print listens
+##    cur.execute("SELECT * FROM user_listens_tracks")
+##    bans=cur.fetchall()
+##    print bans
+##    cur.execute("SELECT * FROM user_loves_tracks")
+##    loves=cur.fetchall()
+##    print loves 
     return True
         
 ### get topfans of tracks
@@ -155,7 +200,7 @@ def topfans():
         except:
             print "track error"
         else:
-            # Change the number of top fans here - if limit=None, returns 50
+            # Track TopFans - Change the number of top fans here - if limit=None, returns 50
             try:
             	topfans=track.get_top_fans(limit=1)
             except:
@@ -166,7 +211,7 @@ def topfans():
                     cur.execute("SELECT COUNT(1) FROM User WHERE user_name=%s" , name)
                     #print name
                     if cur.fetchone()[0]==1:
-                        print name + ' -'+' User already exists--------'
+                        print name + ' -'+' User already exists'
                     else:
                         #print 'go ahead add'
                         cur.execute('INSERT INTO User SET user_name="%s"' % (name))
@@ -175,6 +220,50 @@ def topfans():
                         cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (userid,trackid))
                         #print name + '-'+artist_name +'-'+ track_name
                         #print artistid
+            #Track Shouts
+            try:
+            	shouts=track.get_shouts()
+            except:
+                print "shout error"
+            else:
+                for shout in shouts:
+                    name1=shout[1].get_name()
+                    name=name1.encode('utf-8')
+                    cur.execute("SELECT COUNT(1) FROM User WHERE user_name=%s" , name)
+                    #print name
+                    if cur.fetchone()[0]==1:
+                        print name + ' -'+' User already exists'
+                    else:
+                        #print 'go ahead add'
+                        cur.execute('INSERT INTO User SET user_name="%s"' % (name))
+                        cur.execute("SELECT LAST_INSERT_ID()")
+                        suserid=str(cur.fetchone()[0])
+                        cur.execute("INSERT INTO user_shouts_tracks(user_userid,tracks_trackid) VALUES ('%s','%s')" % (suserid,trackid))
+                       
+            # Track Tags
+            try:
+            	tags=track.get_top_tags()
+            except:
+                print "Tag error"
+            else:
+                for tag in tags:
+                    tagtext1=tag.item.get_name()
+                    tagtext=tagtext1.encode('utf-8')
+                    if len(tagtext) > 255:
+                        tagtext = tagtext[:255]
+                    #print tagtext
+                    cur.execute("SELECT COUNT(1) FROM Tags WHERE tag_text=%s" , tagtext)
+                    #print tagtext
+                    if cur.fetchone()[0]==1:
+                        print tagtext + ' -'+' Tag already exists'
+                    else:
+                        #print 'go ahead add'
+                        cur.execute('INSERT INTO Tags SET tag_text="%s"' % (tagtext))
+                        cur.execute("SELECT LAST_INSERT_ID()")
+                        tagid=str(cur.fetchone()[0])
+                        cur.execute("INSERT INTO tracks_has_tags(tags_tagid,tracks_trackid) VALUES ('%s','%s')" % (tagid,trackid))
+                
+                
             cur.execute("UPDATE Tracks SET is_crawled='1' WHERE track_name=%s AND artist_name=%s" , (track_name,artist_name))
             conn.commit()
 ##    cur.execute("SELECT * FROM User")
