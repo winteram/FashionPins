@@ -118,15 +118,21 @@ def toptracks():
                     track_name = track_name[:255]
                 artist=topfantrack.item.get_artist().get_name()
                 artist_name=artist.encode('utf-8')
+                if len(artist_name) > 255:
+                    artist_name = artist_name[:255]
                 cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (track_name,artist_name))
                 if cur.fetchone()[0]!=1:
                 #print track_name + ' - ' +artist_name + ' -'+' Track already exists'
             #else:
-                    cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (track_name,artist_name))
-                    track=cur.execute("SELECT LAST_INSERT_ID()")
-                    trackid=str(cur.fetchone()[0])
-                #print trackid
-                    cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (\"%s\",\"%s\")" % (userid,trackid))
+                    try:
+                        cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (track_name,artist_name))
+                    except:
+                        print "name too long: %s, %s" % (artist_name,track_name)
+                    else:
+                        track=cur.execute("SELECT LAST_INSERT_ID()")
+                        trackid=str(cur.fetchone()[0])
+                        # print trackid
+                        cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (\"%s\",\"%s\")" % (userid,trackid))
                 
         # Get loved tracks
         try:
@@ -141,15 +147,21 @@ def toptracks():
                     ltrack_name = ltrack_name[:255]
                 lartist=lovedtrack.track.get_artist().get_name()
                 lartist_name=lartist.encode('utf-8')
+                if len(lartist_name) > 255:
+                    lartist_name = lartist_name[:255]
                 cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (ltrack_name,lartist_name))
                 if cur.fetchone()[0]!=1:
                 #print ltrack_name + ' - ' +lartist_name + ' -'+' Track already exists'
             #else:
-                    cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (ltrack_name,lartist_name))
-                    btrack=cur.execute("SELECT LAST_INSERT_ID()")
-                    ltrackid=str(cur.fetchone()[0])
-                #print trackid
-                    cur.execute("INSERT INTO user_loves_tracks(user_userid,tracks_trackid) VALUES (\"%s\",\"%s\")" % (userid,ltrackid))
+                    try:
+                        cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (ltrack_name,lartist_name))
+                    except:
+                        print "artist too long? %s, %s" % (lartist_name,ltrack_name)
+                    else:
+                        btrack=cur.execute("SELECT LAST_INSERT_ID()")
+                        ltrackid=str(cur.fetchone()[0])
+                        # print trackid
+                        cur.execute("INSERT INTO user_loves_tracks(user_userid,tracks_trackid) VALUES (\"%s\",\"%s\")" % (userid,ltrackid))
                 
         # Get banned tracks
         try:
@@ -164,15 +176,21 @@ def toptracks():
                     btrack_name = btrack_name[:255]
                 bartist=bannedtrack.track.get_artist().get_name()
                 bartist_name=bartist.encode('utf-8')
+                if len(bartist_name) > 255:
+                    bartist_name = bartist_name[:255]
                 cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (btrack_name,bartist_name))
                 if cur.fetchone()[0]!=1:
                 #print btrack_name + ' - ' +bartist_name + ' -'+' Track already exists'
             #else:
-                    cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (btrack_name,bartist_name))
-                    btrack=cur.execute("SELECT LAST_INSERT_ID()")
-                    btrackid=str(cur.fetchone()[0])
-                #print trackid
-                    cur.execute("INSERT INTO user_bans_tracks(user_userid,tracks_trackid) VALUES (\"%s\",\"%s\")" % (userid,btrackid))
+                    try:
+                        cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (btrack_name,bartist_name))
+                    except:
+                        print "artist too long? %s, %s" % (bartist_name,btrack_name)
+                    else:
+                        btrack=cur.execute("SELECT LAST_INSERT_ID()")
+                        btrackid=str(cur.fetchone()[0])
+                        # print trackid
+                        cur.execute("INSERT INTO user_bans_tracks(user_userid,tracks_trackid) VALUES (\"%s\",\"%s\")" % (userid,btrackid))
 
         cur.execute("UPDATE User SET is_crawled='1' WHERE user_name=\"%s\"" % item[0])             
         conn.commit()
@@ -295,7 +313,7 @@ def topfans():
 if __name__=="__main__":
     conn = pymysql.connect(host='wmason.mgnt.stevens-tech.edu', port=3306, user='culturalcluster', passwd='W1nter0zturk', db='ccdb')
     cur = conn.cursor()
-    restart = True
+    restart = False
     # TODO: put in command-line argument for restart or continue
     if restart:
         print "Getting initial artists"
