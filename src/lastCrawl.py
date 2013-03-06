@@ -55,6 +55,8 @@ def getinitial(inartists, cur):
     for item in tracklib:
         lartist=item.split('-')[0]
         ltrack=item.split('-')[1]
+        if lartist.startswith("'") and lartist.endswith("'"):
+            lartist = lartist[1:-1]
         #print (ltrack, lartist)
         sql="INSERT INTO Tracks (is_crawled,track_name,artist_name) VALUES (0,\"%s\",\"%s\")" % (ltrack,lartist)
         cur.execute(sql)
@@ -113,6 +115,8 @@ def toptracks():
         else:
             for topfantrack in topfantracks:
                 track=topfantrack.item.get_name()
+                if not track:
+                    continue
                 track_name=track.encode('utf-8')
                 if len(track_name) > 255:
                     track_name = track_name[:255]
@@ -127,7 +131,7 @@ def toptracks():
                     try:
                         cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (track_name,artist_name))
                     except:
-                        print "name too long: %s, %s" % (artist_name,track_name)
+                        print "name too long:\n%s\n%s" % (artist_name,track_name)
                     else:
                         track=cur.execute("SELECT LAST_INSERT_ID()")
                         trackid=str(cur.fetchone()[0])
@@ -142,6 +146,8 @@ def toptracks():
         else:
             for lovedtrack in lovedtracks:
                 ltrack=lovedtrack.track.get_name()
+                if not ltrack:
+                    continue
                 ltrack_name=ltrack.encode('utf-8')
                 if len(ltrack_name) > 255:
                     ltrack_name = ltrack_name[:255]
@@ -171,6 +177,8 @@ def toptracks():
         else:
             for bannedtrack in bannedtracks:
                 btrack=bannedtrack.track.get_name()
+                if not btrack:
+                    continue
                 btrack_name=btrack.encode('utf-8')
                 if len(btrack_name) > 255:
                     btrack_name = btrack_name[:255]
@@ -194,6 +202,9 @@ def toptracks():
 
         cur.execute("UPDATE User SET is_crawled='1' WHERE user_name=\"%s\"" % item[0])             
         conn.commit()
+
+        # get friends
+
 ##    cur.execute("SELECT * FROM User")
 ##    user=cur.fetchall()
 ##    print user
