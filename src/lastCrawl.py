@@ -1,6 +1,7 @@
 import pylast
 import csv
 import pymysql
+import time
 
 API_KEY = '8b2fa4cb683e168f66f47adcc708ad22'
 API_SECRET = '96f5ba11b4313fca6a34b65bba5c5843'
@@ -28,18 +29,20 @@ def getartist(cur):
     cur.execute("TRUNCATE Tracks")
     cur.execute("TRUNCATE User")
     cur.execute("TRUNCATE Tags")
+    cur.execute("TRUNCATE Friends")
     cur.execute("TRUNCATE user_listens_tracks")
     cur.execute("TRUNCATE user_bans_tracks")
     cur.execute("TRUNCATE user_loves_tracks")
     cur.execute("TRUNCATE user_shouts_tracks")
     cur.execute("TRUNCATE tracks_has_tags")
+    cur.execute("TRUNCATE user_has_friends")
     conn.commit()
     return inartists
 
 # get initial artists top 2 songs and the fans
 def getinitial(inartists, cur):
-    for y in range(0,len(inartists)):
-    ##for y in range(0,1):
+    #for y in range(0,len(inartists)):
+    for y in range(0,1):
         artist = network.get_artist(inartists[y])
         top_tracks=artist.get_top_tracks()
         # Tracks table
@@ -148,6 +151,10 @@ def toptracks():
                 ltrack=lovedtrack.track.get_name()
                 if not ltrack:
                     continue
+                ldate=lovedtrack.date
+                ldate=ldate.split(",")[0]
+                d=time.strptime(ldate, "%d %b %Y")
+                ldate=time.strftime("%Y-%m-%d",d)
                 ltrack_name=ltrack.encode('utf-8')
                 if len(ltrack_name) > 255:
                     ltrack_name = ltrack_name[:255]
@@ -167,7 +174,7 @@ def toptracks():
                         btrack=cur.execute("SELECT LAST_INSERT_ID()")
                         ltrackid=str(cur.fetchone()[0])
                         # print trackid
-                        cur.execute("INSERT INTO user_loves_tracks(user_userid,tracks_trackid) VALUES (\"%s\",\"%s\")" % (userid,ltrackid))
+                        cur.execute("INSERT INTO user_loves_tracks(user_userid,tracks_trackid,lovedate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,ltrackid,ldate))
                 
         # Get banned tracks
         try:
@@ -179,6 +186,10 @@ def toptracks():
                 btrack=bannedtrack.track.get_name()
                 if not btrack:
                     continue
+                bdate=bannedtrack.date
+                bdate=bdate.split(",")[0]
+                d=time.strptime(ldate, "%d %b %Y")
+                bdate=time.strftime("%Y-%m-%d",d)
                 btrack_name=btrack.encode('utf-8')
                 if len(btrack_name) > 255:
                     btrack_name = btrack_name[:255]
@@ -198,12 +209,40 @@ def toptracks():
                         btrack=cur.execute("SELECT LAST_INSERT_ID()")
                         btrackid=str(cur.fetchone()[0])
                         # print trackid
-                        cur.execute("INSERT INTO user_bans_tracks(user_userid,tracks_trackid) VALUES (\"%s\",\"%s\")" % (userid,btrackid))
+                        cur.execute("INSERT INTO user_bans_tracks(user_userid,tracks_trackid,bandate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,btrackid,bdate))
+
+        # get friends
+            try:
+            	friend=fan.get_friends()
+            except:
+                print "Friend error"
+            else:
+                for friend in friends:
+                    friendname=friend.get_name()
+                    friendname=friendname.encode('utf-8')
+                    if len(friendname) > 255:
+                        friendname = friendname[:255]
+                    #print friendname
+                    cur.execute("SELECT COUNT(1) FROM Friends WHERE friend_name=\"%s\"" , friendname)
+                    if cur.fetchone()[0] =1:
+                        cur.execute("SELECT friendid FROM Friend Where friend_name=\"%s\"" , friendname)
+                        friendid=str(cur.fetchone()[0])
+                        cur.execute("INSERT INTO user_has_friends(User_userid,Friends_friendid) VALUES (\"%s\",\"%s\")" % (userid,friendid))
+
+                    else:
+                        #print 'go ahead add'
+                        cur.execute('INSERT INTO Friends SET friend_name="%s"' % (friendname))
+                        cur.execute("SELECT LAST_INSERT_ID()")
+                        friendid=str(cur.fetchone()[0])
+                        cur.execute("INSERT INTO user_has_friends(User_userid,Friends_friendid) VALUES (\"%s\",\"%s\")" % (userid,friendid))
+
+                
+
 
         cur.execute("UPDATE User SET is_crawled='1' WHERE user_name=\"%s\"" % item[0])             
         conn.commit()
 
-        # get friends
+        
 
 ##    cur.execute("SELECT * FROM User")
 ##    user=cur.fetchall()
