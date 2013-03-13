@@ -21,7 +21,7 @@ fanlib={}
 
 # get initial top 100 artists and their top 2 tracks
 def getartist(cur):
-    artistlist= csv.reader(open("../data/TopArtists.csv", "rb"))
+    artistlist= csv.reader(open("TopArtists.csv", "rb"))
     inartists=[]
     for data in artistlist:
         inartists.append(data[0])    
@@ -58,6 +58,8 @@ def getinitial(inartists, cur):
     for item in tracklib:
         lartist=item.split('-')[0]
         ltrack=item.split('-')[1]
+        if ltrack.startswith("'") and ltrack.endswith("'"):
+            ltrack = ltrack[1:-1]
         if lartist.startswith("'") and lartist.endswith("'"):
             lartist = lartist[1:-1]
         #print (ltrack, lartist)
@@ -123,10 +125,14 @@ def toptracks():
                 track_name=track.encode('utf-8')
                 if len(track_name) > 255:
                     track_name = track_name[:255]
+                if track_name.startswith("'") and track_name.endswith("'"):
+                    track_name = track_name[1:-1]
                 artist=topfantrack.item.get_artist().get_name()
                 artist_name=artist.encode('utf-8')
                 if len(artist_name) > 255:
                     artist_name = artist_name[:255]
+                if artist_name.startswith("'") and artist_name.endswith("'"):
+                    artist_name = artist_name[1:-1]
                 cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (track_name,artist_name))
                 if cur.fetchone()[0]!=1:
                 #print track_name + ' - ' +artist_name + ' -'+' Track already exists'
@@ -158,10 +164,14 @@ def toptracks():
                 ltrack_name=ltrack.encode('utf-8')
                 if len(ltrack_name) > 255:
                     ltrack_name = ltrack_name[:255]
+                if ltrack.startswith("'") and ltrack.endswith("'"):
+                    ltrack = ltrack[1:-1]
                 lartist=lovedtrack.track.get_artist().get_name()
                 lartist_name=lartist.encode('utf-8')
                 if len(lartist_name) > 255:
                     lartist_name = lartist_name[:255]
+                if lartist.startswith("'") and lartist.endswith("'"):
+                    lartist = lartist[1:-1]
                 cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (ltrack_name,lartist_name))
                 if cur.fetchone()[0]!=1:
                 #print ltrack_name + ' - ' +lartist_name + ' -'+' Track already exists'
@@ -174,7 +184,7 @@ def toptracks():
                         btrack=cur.execute("SELECT LAST_INSERT_ID()")
                         ltrackid=str(cur.fetchone()[0])
                         # print trackid
-                        cur.execute("INSERT INTO user_loves_tracks(user_userid,tracks_trackid,lovedate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,ltrackid,ldate))
+                        cur.execute("INSERT INTO user_loves_tracks(user_userid,tracks_trackid,ldate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,ltrackid,ldate))
                 
         # Get banned tracks
         try:
@@ -188,7 +198,7 @@ def toptracks():
                     continue
                 bdate=bannedtrack.date
                 bdate=bdate.split(",")[0]
-                d=time.strptime(ldate, "%d %b %Y")
+                d=time.strptime(bdate, "%d %b %Y")
                 bdate=time.strftime("%Y-%m-%d",d)
                 btrack_name=btrack.encode('utf-8')
                 if len(btrack_name) > 255:
@@ -209,32 +219,31 @@ def toptracks():
                         btrack=cur.execute("SELECT LAST_INSERT_ID()")
                         btrackid=str(cur.fetchone()[0])
                         # print trackid
-                        cur.execute("INSERT INTO user_bans_tracks(user_userid,tracks_trackid,bandate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,btrackid,bdate))
+                        cur.execute("INSERT INTO user_bans_tracks(user_userid,tracks_trackid,bdate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,btrackid,bdate))
 
         # get friends
-            try:
-            	friend=fan.get_friends()
-            except:
-                print "Friend error"
-            else:
-                for friend in friends:
-                    friendname=friend.get_name()
-                    friendname=friendname.encode('utf-8')
-                    if len(friendname) > 255:
-                        friendname = friendname[:255]
-                    #print friendname
-                    cur.execute("SELECT COUNT(1) FROM Friends WHERE friend_name=\"%s\"" , friendname)
-                    if cur.fetchone()[0] =1:
-                        cur.execute("SELECT friendid FROM Friend Where friend_name=\"%s\"" , friendname)
-                        friendid=str(cur.fetchone()[0])
-                        cur.execute("INSERT INTO user_has_friends(User_userid,Friends_friendid) VALUES (\"%s\",\"%s\")" % (userid,friendid))
-
-                    else:
-                        #print 'go ahead add'
-                        cur.execute('INSERT INTO Friends SET friend_name="%s"' % (friendname))
-                        cur.execute("SELECT LAST_INSERT_ID()")
-                        friendid=str(cur.fetchone()[0])
-                        cur.execute("INSERT INTO user_has_friends(User_userid,Friends_friendid) VALUES (\"%s\",\"%s\")" % (userid,friendid))
+        try:
+            friends=fan.get_friends()
+        except:
+            print "Could not get friends for " + item[0]
+        else:
+            for friend in friends:
+                friendname=friend.get_name()
+                friendname=friendname.encode('utf-8')
+                if len(friendname) > 255:
+                    friendname = friendname[:255]
+                #print friendname
+                cur.execute("SELECT COUNT(1) FROM Friends WHERE friend_name=\"%s\"" , friendname)
+                if cur.fetchone()[0] ==1:
+                    cur.execute("SELECT friendid FROM Friend Where friend_name=\"%s\"" , friendname)
+                    friendid=str(cur.fetchone()[0])
+                    cur.execute("INSERT INTO user_has_friends(User_userid,Friends_friendid) VALUES (\"%s\",\"%s\")" % (userid,friendid))
+                else:
+                    #print 'go ahead add'
+                    cur.execute('INSERT INTO Friends SET friend_name="%s"' % (friendname))
+                    cur.execute("SELECT LAST_INSERT_ID()")
+                    friendid=str(cur.fetchone()[0])
+                    cur.execute("INSERT INTO user_has_friends(User_userid,Friends_friendid) VALUES (\"%s\",\"%s\")" % (userid,friendid))
 
                 
 
@@ -271,7 +280,12 @@ def topfans():
         track_name=item[0]
         if len(track_name) > 255:
             track_name = track_name[:255]
+        if track_name.startswith("'") and track_name.endswith("'"):
+            track_name = track_name[1:-1]
         artist_name=item[1]
+        if artist_name.startswith("'") and artist_name.endswith("'"):
+            artist_name = artist_name[1:-1]
+        #print track_name + '-' + artist_name
         cur.execute("SELECT trackid FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (track_name,artist_name))
         trackid=str(cur.fetchone()[0])
         #print trackid+ '-' + 'trackname: ' + track_name + ' artistname: ' + artist_name
@@ -363,7 +377,7 @@ def topfans():
 if __name__=="__main__":
     conn = pymysql.connect(host='wmason.mgnt.stevens-tech.edu', port=3306, user='culturalcluster', passwd='W1nter0zturk', db='ccdb')
     cur = conn.cursor()
-    restart = False
+    restart = True
     # TODO: put in command-line argument for restart or continue
     if restart:
         print "Getting initial artists"
@@ -373,7 +387,7 @@ if __name__=="__main__":
     #tracks=toptracks()
     #fans=topfans()
 
-    for z in range(0,3):     
+    for z in range(0,1):     
         print "Getting top tracks"
         tracks=toptracks()
         print "Getting top fans"
