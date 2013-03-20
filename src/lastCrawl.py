@@ -29,13 +29,13 @@ def getartist(cur):
     cur.execute("TRUNCATE Tracks")
     cur.execute("TRUNCATE User")
     cur.execute("TRUNCATE Tags")
-    cur.execute("TRUNCATE Friends")
     cur.execute("TRUNCATE user_listens_tracks")
     cur.execute("TRUNCATE user_bans_tracks")
     cur.execute("TRUNCATE user_loves_tracks")
     cur.execute("TRUNCATE user_shouts_tracks")
     cur.execute("TRUNCATE tracks_has_tags")
     cur.execute("TRUNCATE user_has_friends")
+    cur.execute("TRUNCATE user_chart_tracks")
     conn.commit()
     return inartists
 
@@ -134,9 +134,11 @@ def toptracks():
                 if artist_name.startswith("'") and artist_name.endswith("'"):
                     artist_name = artist_name[1:-1]
                 cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (track_name,artist_name))
-                if cur.fetchone()[0]!=1:
-                #print track_name + ' - ' +artist_name + ' -'+' Track already exists'
-            #else:
+                if cur.fetchone()[0]==1:
+                    cur.execute("SELECT trackid FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (track_name,artist_name))
+                    trackid=str(cur.fetchone()[0])
+                    cur.execute("INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (\"%s\",\"%s\")" % (userid,trackid))
+                else:
                     try:
                         cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (track_name,artist_name))
                     except:
@@ -173,9 +175,11 @@ def toptracks():
                 if lartist.startswith("'") and lartist.endswith("'"):
                     lartist = lartist[1:-1]
                 cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (ltrack_name,lartist_name))
-                if cur.fetchone()[0]!=1:
-                #print ltrack_name + ' - ' +lartist_name + ' -'+' Track already exists'
-            #else:
+                if cur.fetchone()[0]==1:
+                    cur.execute("SELECT trackid FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (ltrack_name,lartist_name))
+                    ltrackid=str(cur.fetchone()[0])
+                    cur.execute("INSERT INTO user_loves_tracks(user_userid,tracks_trackid,ldate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,ltrackid,ldate))
+                else:
                     try:
                         cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (ltrack_name,lartist_name))
                     except:
@@ -208,9 +212,11 @@ def toptracks():
                 if len(bartist_name) > 255:
                     bartist_name = bartist_name[:255]
                 cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (btrack_name,bartist_name))
-                if cur.fetchone()[0]!=1:
-                #print btrack_name + ' - ' +bartist_name + ' -'+' Track already exists'
-            #else:
+                if cur.fetchone()[0]==1:
+                    cur.execute("SELECT trackid FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (btrack_name,bartist_name))
+                    btrackid=str(cur.fetchone()[0])
+                    cur.execute("INSERT INTO user_bans_tracks(user_userid,tracks_trackid,bdate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,btrackid,bdate))
+                else:
                     try:
                         cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (btrack_name,bartist_name))
                     except:
@@ -233,19 +239,59 @@ def toptracks():
                 if len(friendname) > 255:
                     friendname = friendname[:255]
                 #print friendname
-                cur.execute("SELECT COUNT(1) FROM Friends WHERE friend_name=\"%s\"" , friendname)
+                cur.execute("SELECT COUNT(1) FROM User WHERE user_name=\"%s\"" , friendname)
                 if cur.fetchone()[0] ==1:
-                    cur.execute("SELECT friendid FROM Friend Where friend_name=\"%s\"" , friendname)
+                    cur.execute("SELECT userid FROM User Where user_name=\"%s\"" , friendname)
                     friendid=str(cur.fetchone()[0])
-                    cur.execute("INSERT INTO user_has_friends(User_userid,Friends_friendid) VALUES (\"%s\",\"%s\")" % (userid,friendid))
+                    cur.execute("INSERT INTO user_has_friends(User_userid,User_userid1) VALUES (\"%s\",\"%s\")" % (userid,friendid))
                 else:
                     #print 'go ahead add'
-                    cur.execute('INSERT INTO Friends SET friend_name="%s"' % (friendname))
+                    cur.execute('INSERT INTO User SET user_name="%s"' % (friendname))
                     cur.execute("SELECT LAST_INSERT_ID()")
                     friendid=str(cur.fetchone()[0])
-                    cur.execute("INSERT INTO user_has_friends(User_userid,Friends_friendid) VALUES (\"%s\",\"%s\")" % (userid,friendid))
+                    cur.execute("INSERT INTO user_has_friends(User_userid,User_userid1) VALUES (\"%s\",\"%s\")" % (userid,friendid))
 
-                
+        #Get tracks info from User Weekly Track Chart - March 10-17th      
+        try:
+            fromdate=1362916800
+            todate=1363521600
+            charts=fan.get_weekly_track_charts(fromdate,todate)
+        except:
+            print "Could not get chart tracks for " + item[0]
+        else:
+            if len(charts)!=0:
+                for chart in charts:
+                    ctrack=chart.item.get_name()
+                    if not ctrack:
+                        continue
+                    ctrack_name=ctrack.encode('utf-8')
+                    if len(ctrack_name) > 255:
+                        ctrack_name = ctrack_name[:255]
+                    if ctrack_name.startswith("'") and ctrack_name.endswith("'"):
+                        ctrack_name = ctrack_name[1:-1]
+                    cartist=chart.item.get_artist().get_name()
+                    cartist_name=cartist.encode('utf-8')
+                    if len(cartist_name) > 255:
+                        cartist_name = cartist_name[:255]
+                    if cartist_name.startswith("'") and cartist_name.endswith("'"):
+                        cartist_name = cartist_name[1:-1]
+                    weight=chart.weight
+                    cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (ctrack_name,cartist_name))
+                    if cur.fetchone()[0]==1:
+                        cur.execute("SELECT trackid FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (ctrack_name,cartist_name))
+                        ctrackid=str(cur.fetchone()[0])
+                        cur.execute("INSERT INTO user_chart_tracks(User_userid,Tracks_trackid,weight,from_date,to_date) VALUES (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" % (userid,ctrackid,weight,fromdate,todate))
+                    else:
+                        try:
+                            cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (ctrack_name,cartist_name))
+                        except:
+                            print "artist too long? %s, %s" % (cartist_name,ctrack_name)
+                        else:
+                            ctrack=cur.execute("SELECT LAST_INSERT_ID()")
+                            ctrackid=str(cur.fetchone()[0])
+                            # print trackid
+                            cur.execute("INSERT INTO user_chart_tracks(User_userid,Tracks_trackid,weight,from_date,to_date) VALUES (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" % (userid,ctrackid,weight,fromdate,todate))
+
 
 
         cur.execute("UPDATE User SET is_crawled='1' WHERE user_name=\"%s\"" % item[0])             
