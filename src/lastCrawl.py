@@ -21,7 +21,7 @@ fanlib={}
 
 # get initial top 100 artists and their top 2 tracks
 def getartist(cur):
-    artistlist= csv.reader(open("TopArtists.csv", "rb"))
+    artistlist= csv.reader(open("../data/TopArtists.csv", "rb"))
     inartists=[]
     for data in artistlist:
         inartists.append(data[0])    
@@ -41,8 +41,8 @@ def getartist(cur):
 
 # get initial artists top 2 songs and the fans
 def getinitial(inartists, cur):
-    #for y in range(0,len(inartists)):
-    for y in range(0,1):
+    for y in range(0,len(inartists)):
+    # for y in range(0,1):
         artist = network.get_artist(inartists[y])
         top_tracks=artist.get_top_tracks()
         # Tracks table
@@ -296,7 +296,7 @@ def topfans():
         else:
             # Track TopFans - Change the number of top fans here - if limit=None, returns 50
             try:
-            	topfans=track.get_top_fans(limit=1)
+            	topfans=track.get_top_fans()
             except:
                 print "fans error"
             else:
@@ -387,7 +387,7 @@ if __name__=="__main__":
     #tracks=toptracks()
     #fans=topfans()
 
-    for z in range(0,1):     
+    for z in range(0,3):     
         print "Getting top tracks"
         tracks=toptracks()
         print "Getting top fans"
