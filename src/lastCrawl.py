@@ -252,6 +252,7 @@ def toptracks():
                     cur.execute("INSERT INTO user_has_friends(User_userid,User_userid1) VALUES (\"%s\",\"%s\")" % (userid,friendid))
 
         #Get tracks info from User Weekly Track Chart - March 10-17th      
+        today_date=
         try:
             fromdate=1362916800
             todate=1363521600
