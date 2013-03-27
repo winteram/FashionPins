@@ -21,7 +21,7 @@ fanlib={}
 
 # get initial top 100 artists and their top 2 tracks
 def getartist(cur):
-    artistlist= csv.reader(open("../data/TopArtists.csv", "rb"))
+    artistlist= csv.reader(open("TopArtists.csv", "rb"))
     inartists=[]
     for data in artistlist:
         inartists.append(data[0])    
@@ -35,14 +35,14 @@ def getartist(cur):
     cur.execute("TRUNCATE user_shouts_tracks")
     cur.execute("TRUNCATE tracks_has_tags")
     cur.execute("TRUNCATE user_has_friends")
-    cur.execute("TRUNCATE user_chart_tracks")
+    cur.execute("TRUNCATE user_recent_tracks")
     conn.commit()
     return inartists
 
 # get initial artists top 2 songs and the fans
 def getinitial(inartists, cur):
-    for y in range(0,len(inartists)):
-    # for y in range(0,1):
+    #for y in range(0,len(inartists)):
+    for y in range(0,1):
         artist = network.get_artist(inartists[y])
         top_tracks=artist.get_top_tracks()
         # Tracks table
@@ -142,7 +142,7 @@ def toptracks():
                     try:
                         cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (track_name,artist_name))
                     except:
-                        print "name too long:\n%s\n%s" % (artist_name,track_name)
+                        print "listens: name too long:\n%s\n%s" % (artist_name,track_name)
                     else:
                         track=cur.execute("SELECT LAST_INSERT_ID()")
                         trackid=str(cur.fetchone()[0])
@@ -183,9 +183,9 @@ def toptracks():
                     try:
                         cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (ltrack_name,lartist_name))
                     except:
-                        print "artist too long? %s, %s" % (lartist_name,ltrack_name)
+                        print "loves: artist too long? %s, %s" % (lartist_name,ltrack_name)
                     else:
-                        btrack=cur.execute("SELECT LAST_INSERT_ID()")
+                        cur.execute("SELECT LAST_INSERT_ID()")
                         ltrackid=str(cur.fetchone()[0])
                         # print trackid
                         cur.execute("INSERT INTO user_loves_tracks(user_userid,tracks_trackid,ldate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,ltrackid,ldate))
@@ -220,7 +220,7 @@ def toptracks():
                     try:
                         cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (btrack_name,bartist_name))
                     except:
-                        print "artist too long? %s, %s" % (bartist_name,btrack_name)
+                        print "bans: artist too long? %s, %s" % (bartist_name,btrack_name)
                     else:
                         btrack=cur.execute("SELECT LAST_INSERT_ID()")
                         btrackid=str(cur.fetchone()[0])
@@ -251,48 +251,47 @@ def toptracks():
                     friendid=str(cur.fetchone()[0])
                     cur.execute("INSERT INTO user_has_friends(User_userid,User_userid1) VALUES (\"%s\",\"%s\")" % (userid,friendid))
 
-        #Get tracks info from User Weekly Track Chart - March 10-17th      
-        today_date=
-        try:
-            fromdate=1362916800
-            todate=1363521600
-            charts=fan.get_weekly_track_charts(fromdate,todate)
+        #Get recent tracks - Limit=200 Max Value - pylast doesn't accept from/to date parameters even though API has those.     
+        try:   
+            recents=fan.get_recent_tracks(limit=200)
         except:
-            print "Could not get chart tracks for " + item[0]
+            print "Could not get recent tracks for " + item[0]
         else:
-            if len(charts)!=0:
-                for chart in charts:
-                    ctrack=chart.item.get_name()
-                    if not ctrack:
+            if len(recents)!=0:
+                for recent in recents:
+                    rtrack=recent.track.get_name()
+                    if not rtrack:
                         continue
-                    ctrack_name=ctrack.encode('utf-8')
-                    if len(ctrack_name) > 255:
-                        ctrack_name = ctrack_name[:255]
-                    if ctrack_name.startswith("'") and ctrack_name.endswith("'"):
-                        ctrack_name = ctrack_name[1:-1]
-                    cartist=chart.item.get_artist().get_name()
-                    cartist_name=cartist.encode('utf-8')
-                    if len(cartist_name) > 255:
-                        cartist_name = cartist_name[:255]
-                    if cartist_name.startswith("'") and cartist_name.endswith("'"):
-                        cartist_name = cartist_name[1:-1]
-                    weight=chart.weight
-                    cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (ctrack_name,cartist_name))
+                    rtrack_name=rtrack.encode('utf-8')
+                    if len(rtrack_name) > 255:
+                        rtrack_name = rtrack_name[:255]
+                    if rtrack_name.startswith("'") and rtrack_name.endswith("'"):
+                        rtrack_name = rtrack_name[1:-1]
+                    rartist=recent.track.get_artist().get_name()
+                    rartist_name=rartist.encode('utf-8')
+                    if len(rartist_name) > 255:
+                        rartist_name = rartist_name[:255]
+                    if rartist_name.startswith("'") and rartist_name.endswith("'"):
+                        rartist_name = rartist_name[1:-1]
+                    rdate=recent.playback_date
+                    rdate=rdate.split(",")[0]
+                    d=time.strptime(rdate, "%d %b %Y")
+                    rdate=time.strftime("%Y-%m-%d",d)
+                    cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (rtrack_name,rartist_name))
                     if cur.fetchone()[0]==1:
-                        cur.execute("SELECT trackid FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (ctrack_name,cartist_name))
-                        ctrackid=str(cur.fetchone()[0])
-                        cur.execute("INSERT INTO user_chart_tracks(User_userid,Tracks_trackid,weight,from_date,to_date) VALUES (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" % (userid,ctrackid,weight,fromdate,todate))
+                        cur.execute("SELECT trackid FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (rtrack_name,rartist_name))
+                        rtrackid=str(cur.fetchone()[0])
+                        cur.execute("INSERT INTO user_recent_tracks(User_userid,Tracks_trackid,date) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,rtrackid,rdate))
                     else:
                         try:
-                            cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (ctrack_name,cartist_name))
+                            cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (rtrack_name,rartist_name))
                         except:
-                            print "artist too long? %s, %s" % (cartist_name,ctrack_name)
+                            print "recents: artist too long? %s, %s" % (rartist_name,rtrack_name)
                         else:
-                            ctrack=cur.execute("SELECT LAST_INSERT_ID()")
-                            ctrackid=str(cur.fetchone()[0])
+                            cur.execute("SELECT LAST_INSERT_ID()")
+                            rtrackid=str(cur.fetchone()[0])
                             # print trackid
-                            cur.execute("INSERT INTO user_chart_tracks(User_userid,Tracks_trackid,weight,from_date,to_date) VALUES (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" % (userid,ctrackid,weight,fromdate,todate))
-
+                            cur.execute("INSERT INTO user_recent_tracks(User_userid,Tracks_trackid,date) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,rtrackid,rdate))
 
 
         cur.execute("UPDATE User SET is_crawled='1' WHERE user_name=\"%s\"" % item[0])             
@@ -343,7 +342,7 @@ def topfans():
         else:
             # Track TopFans - Change the number of top fans here - if limit=None, returns 50
             try:
-            	topfans=track.get_top_fans()
+            	topfans=track.get_top_fans(limit=1)
             except:
                 print "fans error"
             else:
@@ -434,7 +433,7 @@ if __name__=="__main__":
     #tracks=toptracks()
     #fans=topfans()
 
-    for z in range(0,3):     
+    for z in range(0,1):     
         print "Getting top tracks"
         tracks=toptracks()
         print "Getting top fans"
