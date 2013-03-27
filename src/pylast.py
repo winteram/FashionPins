@@ -2924,7 +2924,7 @@ class User(_BaseObject):
         return Track(artist, title, self.network)
 
 
-    def get_recent_tracks(self, limit = 10):
+    def get_recent_tracks(self, limit=None, from_d=None, to_d=None):
         """Returns this user's played track as a sequence of PlayedTrack objects
         in reverse order of their playtime, all the way back to the first track.
         
@@ -2938,7 +2938,19 @@ class User(_BaseObject):
         
         params = self._get_params()
         if limit:
-            params['limit'] = limit
+            if from_d or to_d:
+                raise Exception("Can specify limit or from/to, not both")
+            if limit > 200:
+                params['limit'] = 200
+            elif limit < 1:
+                params['limit'] = 200
+            else:
+                params['limit'] = limit
+        
+        if from_d:
+            params['from'] = from_d
+        if to_d:
+            params['to'] = to_d
         
         seq = []
         for track in _collect_nodes(limit, self, "user.getRecentTracks", True, params):
@@ -3527,10 +3539,10 @@ def _string(text):
 
 def _collect_nodes(limit, sender, method_name, cacheable, params=None):
     """
-        Returns a sequqnce of dom.Node objects about as close to
+        Returns a sequence of dom.Node objects about as close to
         limit as possible
     """
-    
+    #525252
     if not params:
         params = sender._get_params()
     
@@ -3538,10 +3550,17 @@ def _collect_nodes(limit, sender, method_name, cacheable, params=None):
     page = 1
     end_of_pages = False
     
+    # test whether more than 0.5 second has passed
+    start=time.time()
+
     while not end_of_pages and (not limit or (limit and len(nodes) < limit)):
         params["page"] = str(page)
+        elapsed = time.time() - start
+        if elapsed > 0.25:
+            time.sleep(0.25)
+            start = time.time()
         doc = sender._request(method_name, cacheable, params)
-        
+
         main = doc.documentElement.childNodes[1]
         
         if main.hasAttribute("totalPages"):
