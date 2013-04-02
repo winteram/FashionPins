@@ -2936,6 +2936,7 @@ class User(_BaseObject):
         Use extract_items() with the return of this function to
         get only a sequence of Track objects with no playback dates. """
         
+		#232323
         params = self._get_params()
         if limit:
             if from_d or to_d:
@@ -3549,18 +3550,29 @@ def _collect_nodes(limit, sender, method_name, cacheable, params=None):
     nodes = []
     page = 1
     end_of_pages = False
+    num_errors = 0
     
     # test whether more than 0.5 second has passed
     start=time.time()
 
-    while not end_of_pages and (not limit or (limit and len(nodes) < limit)):
+    while not end_of_pages and (not limit or (limit and len(nodes) < limit)) and num_errors < 5:
         params["page"] = str(page)
         elapsed = time.time() - start
         if elapsed > 0.25:
-            time.sleep(0.25)
+            time.sleep(0.75)
             start = time.time()
-        doc = sender._request(method_name, cacheable, params)
+        try:
+            doc = sender._request(method_name, cacheable, params)
+        except MalformedResponseError as e:
+            print "Malformed Response ", e
+            num_errors += 1
+            continue
+        except WSError as w:
+            print "WSError ", w
+            num_errors += 1
+            continue
 
+        num_errors = 0
         main = doc.documentElement.childNodes[1]
         
         if main.hasAttribute("totalPages"):
