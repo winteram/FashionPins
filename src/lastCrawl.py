@@ -115,6 +115,7 @@ def toptracks():
         # Get top listened tracks
         try:
             topfantracks=fan.get_top_tracks()
+            print "getting top tracks for " +item[0]
         except:
             print "Could not get top tracks for " + item[0]
         else:
@@ -152,6 +153,7 @@ def toptracks():
         # Get loved tracks
         try:
             lovedtracks=fan.get_loved_tracks()
+            print "getting loved tracks for " + item[0]
         except:
             print "Could not get loved tracks for " + item[0]
         else:
@@ -193,6 +195,7 @@ def toptracks():
         # Get banned tracks
         try:
             bannedtracks=fan.get_banned_tracks()
+            print "getting banned tracks for " + item[0]
         except:
             print "Could not get banned tracks for " + item[0]
         else:
@@ -226,10 +229,16 @@ def toptracks():
                         btrackid=str(cur.fetchone()[0])
                         # print trackid
                         cur.execute("INSERT INTO user_bans_tracks(user_userid,tracks_trackid,bdate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,btrackid,bdate))
+        if bannedtracks:
+            oldestbdate=bannedtracks[len(bannedtracks)-1].timestamp
+            print oldestbdate
+        else:
+            oldestbdate=1349049600
 
         # get friends
         try:
             friends=fan.get_friends()
+            print "getting friends for " +item[0]
         except:
             print "Could not get friends for " + item[0]
         else:
@@ -251,47 +260,48 @@ def toptracks():
                     friendid=str(cur.fetchone()[0])
                     cur.execute("INSERT INTO user_has_friends(User_userid,User_userid1) VALUES (\"%s\",\"%s\")" % (userid,friendid))
 
-        #Get recent tracks - Limit=200 Max Value - pylast doesn't accept from/to date parameters even though API has those.     
-        try:   
-            recents=fan.get_recent_tracks(limit=200)
+        #Get recent tracks
+        try:
+            recents=fan.get_recent_tracks(from_d=oldestbdate)
+            print "getting recent tracks for " + item[0]
+            print recents
         except:
             print "Could not get recent tracks for " + item[0]
         else:
-            if len(recents)!=0:
-                for recent in recents:
-                    rtrack=recent.track.get_name()
-                    if not rtrack:
-                        continue
-                    rtrack_name=rtrack.encode('utf-8')
-                    if len(rtrack_name) > 255:
-                        rtrack_name = rtrack_name[:255]
-                    if rtrack_name.startswith("'") and rtrack_name.endswith("'"):
-                        rtrack_name = rtrack_name[1:-1]
-                    rartist=recent.track.get_artist().get_name()
-                    rartist_name=rartist.encode('utf-8')
-                    if len(rartist_name) > 255:
-                        rartist_name = rartist_name[:255]
-                    if rartist_name.startswith("'") and rartist_name.endswith("'"):
-                        rartist_name = rartist_name[1:-1]
-                    rdate=recent.playback_date
-                    rdate=rdate.split(",")[0]
-                    d=time.strptime(rdate, "%d %b %Y")
-                    rdate=time.strftime("%Y-%m-%d",d)
-                    cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (rtrack_name,rartist_name))
-                    if cur.fetchone()[0]==1:
-                        cur.execute("SELECT trackid FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (rtrack_name,rartist_name))
-                        rtrackid=str(cur.fetchone()[0])
-                        cur.execute("INSERT INTO user_recent_tracks(User_userid,Tracks_trackid,date) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,rtrackid,rdate))
+            for recent in recents:
+                rtrack=recent.track.get_name()
+                if not rtrack:
+                    continue
+                rtrack_name=rtrack.encode('utf-8')
+                if len(rtrack_name) > 255:
+                    rtrack_name = rtrack_name[:255]
+                if rtrack_name.startswith("'") and rtrack_name.endswith("'"):
+                    rtrack_name = rtrack_name[1:-1]
+                rartist=recent.track.get_artist().get_name()
+                rartist_name=rartist.encode('utf-8')
+                if len(rartist_name) > 255:
+                    rartist_name = rartist_name[:255]
+                if rartist_name.startswith("'") and rartist_name.endswith("'"):
+                    rartist_name = rartist_name[1:-1]
+                rdate=recent.playback_date
+                rdate=rdate.split(",")[0]
+                d=time.strptime(rdate, "%d %b %Y")
+                rdate=time.strftime("%Y-%m-%d",d)
+                cur.execute("SELECT COUNT(1) FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (rtrack_name,rartist_name))
+                if cur.fetchone()[0]==1:
+                    cur.execute("SELECT trackid FROM Tracks WHERE track_name=\"%s\" AND artist_name=\"%s\"" , (rtrack_name,rartist_name))
+                    rtrackid=str(cur.fetchone()[0])
+                    cur.execute("INSERT INTO user_recent_tracks(User_userid,Tracks_trackid,date) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,rtrackid,rdate))
+                else:
+                    try:
+                        cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (rtrack_name,rartist_name))
+                    except:
+                        print "recents: artist too long? %s, %s" % (rartist_name,rtrack_name)
                     else:
-                        try:
-                            cur.execute("INSERT INTO Tracks(track_name,artist_name) VALUES (\"%s\",\"%s\")" , (rtrack_name,rartist_name))
-                        except:
-                            print "recents: artist too long? %s, %s" % (rartist_name,rtrack_name)
-                        else:
-                            cur.execute("SELECT LAST_INSERT_ID()")
-                            rtrackid=str(cur.fetchone()[0])
-                            # print trackid
-                            cur.execute("INSERT INTO user_recent_tracks(User_userid,Tracks_trackid,date) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,rtrackid,rdate))
+                        cur.execute("SELECT LAST_INSERT_ID()")
+                        rtrackid=str(cur.fetchone()[0])
+                        # print trackid
+                        cur.execute("INSERT INTO user_recent_tracks(User_userid,Tracks_trackid,date) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,rtrackid,rdate))
 
 
         cur.execute("UPDATE User SET is_crawled='1' WHERE user_name=\"%s\"" % item[0])             
