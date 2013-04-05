@@ -191,7 +191,7 @@ def toptracks():
                         ltrackid=str(cur.fetchone()[0])
                         # print trackid
                         cur.execute("INSERT INTO user_loves_tracks(user_userid,tracks_trackid,ldate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,ltrackid,ldate))
-                
+               
         # Get banned tracks
         try:
             print "getting banned tracks for " + item[0]
@@ -233,8 +233,10 @@ def toptracks():
             oldestbdate=bannedtracks[len(bannedtracks)-1].timestamp
             #print oldestbdate
         else:
+            # if no banned tracks, set oldestbdate as Oct1,2012 for getting recent tracks 
             oldestbdate=1349049600
-
+        
+            
         # get friends
         try:
             print "getting friends for " +item[0]
@@ -259,7 +261,7 @@ def toptracks():
                     cur.execute("SELECT LAST_INSERT_ID()")
                     friendid=str(cur.fetchone()[0])
                     cur.execute("INSERT INTO user_has_friends(User_userid,User_userid1) VALUES (\"%s\",\"%s\")" % (userid,friendid))
-
+        
         #Get recent tracks
         try:
             print "getting recent tracks for " + item[0]

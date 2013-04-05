@@ -2798,7 +2798,7 @@ class User(_BaseObject):
         
         return events
     
-    def get_friends(self, limit = 50):
+    def get_friends(self, limit = None):
         """Returns a list of the user's friends. """
         
         seq = []
@@ -2807,7 +2807,7 @@ class User(_BaseObject):
         
         return seq
     
-    def get_loved_tracks(self, limit=50):
+    def get_loved_tracks(self, limit=None):
         """Returns this user's loved track as a sequence of LovedTrack objects
         in reverse order of their timestamp, all the way back to the first track.
         
@@ -2821,7 +2821,12 @@ class User(_BaseObject):
         
         params = self._get_params()
         if limit:
-            params['limit'] = limit
+            if limit>200:
+                params['limit']=200
+            elif limit<1:
+                params['limit']=200
+            else:
+                params['limit'] = limit
         
         seq = []
         for track in _collect_nodes(limit, self, "user.getLovedTracks", True, params):
@@ -2836,7 +2841,7 @@ class User(_BaseObject):
         return seq
 
     
-    def get_banned_tracks(self, limit=50):
+    def get_banned_tracks(self, limit=None):
         """Returns this user's banned track as a sequence of BannedTrack objects
         in reverse order of their timestamp, all the way back to the first track.
         
@@ -2850,7 +2855,12 @@ class User(_BaseObject):
         
         params = self._get_params()
         if limit:
-            params['limit'] = limit
+            if limit>200:
+                params['limit']=200
+            elif limit<1:
+                params['limit']=200
+            else:
+                params['limit'] = limit
         
         seq = []
         for track in _collect_nodes(limit, self, "user.getBannedTracks", True, params):
