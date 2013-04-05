@@ -6,4 +6,6 @@ password_hash = pylast.md5("W1nter0zturk")
 network = pylast.LastFMNetwork(api_key = API_KEY, api_secret =
     API_SECRET, username = username, password_hash = password_hash)
 fan=network.get_user('ineflores')
-recents=fan.get_recent_tracks(from_d=1349049600)
+recents=fan.get_recent_tracks(from_d=1320019200)
+
+print recents

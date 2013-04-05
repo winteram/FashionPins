@@ -21,7 +21,7 @@ fanlib={}
 
 # get initial top 100 artists and their top 2 tracks
 def getartist(cur):
-    artistlist= csv.reader(open("TopArtists.csv", "rb"))
+    artistlist= csv.reader(open("../data/TopArtists.csv", "rb"))
     inartists=[]
     for data in artistlist:
         inartists.append(data[0])    
@@ -41,8 +41,8 @@ def getartist(cur):
 
 # get initial artists top 2 songs and the fans
 def getinitial(inartists, cur):
-    #for y in range(0,len(inartists)):
-    for y in range(0,1):
+    for y in range(0,len(inartists)):
+    #for y in range(0,1):
         artist = network.get_artist(inartists[y])
         top_tracks=artist.get_top_tracks()
         # Tracks table
@@ -114,8 +114,8 @@ def toptracks():
 
         # Get top listened tracks
         try:
-            topfantracks=fan.get_top_tracks()
             print "getting top tracks for " +item[0]
+            topfantracks=fan.get_top_tracks()
         except:
             print "Could not get top tracks for " + item[0]
         else:
@@ -152,8 +152,8 @@ def toptracks():
                 
         # Get loved tracks
         try:
-            lovedtracks=fan.get_loved_tracks()
             print "getting loved tracks for " + item[0]
+            lovedtracks=fan.get_loved_tracks()
         except:
             print "Could not get loved tracks for " + item[0]
         else:
@@ -194,8 +194,8 @@ def toptracks():
                 
         # Get banned tracks
         try:
-            bannedtracks=fan.get_banned_tracks()
             print "getting banned tracks for " + item[0]
+            bannedtracks=fan.get_banned_tracks()
         except:
             print "Could not get banned tracks for " + item[0]
         else:
@@ -231,14 +231,14 @@ def toptracks():
                         cur.execute("INSERT INTO user_bans_tracks(user_userid,tracks_trackid,bdate) VALUES (\"%s\",\"%s\",\"%s\")" % (userid,btrackid,bdate))
         if bannedtracks:
             oldestbdate=bannedtracks[len(bannedtracks)-1].timestamp
-            print oldestbdate
+            #print oldestbdate
         else:
             oldestbdate=1349049600
 
         # get friends
         try:
-            friends=fan.get_friends()
             print "getting friends for " +item[0]
+            friends=fan.get_friends()
         except:
             print "Could not get friends for " + item[0]
         else:
@@ -262,9 +262,9 @@ def toptracks():
 
         #Get recent tracks
         try:
-            recents=fan.get_recent_tracks(from_d=oldestbdate)
             print "getting recent tracks for " + item[0]
-            print recents
+            recents=fan.get_recent_tracks(from_d=oldestbdate)
+            #print recents
         except:
             print "Could not get recent tracks for " + item[0]
         else:
@@ -352,7 +352,8 @@ def topfans():
         else:
             # Track TopFans - Change the number of top fans here - if limit=None, returns 50
             try:
-            	topfans=track.get_top_fans(limit=1)
+            	#topfans=track.get_top_fans(limit=1)
+                topfans=track.get_top_fans(limit=None)
             except:
                 print "fans error"
             else:
