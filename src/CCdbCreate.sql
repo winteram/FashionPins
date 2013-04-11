@@ -13,8 +13,8 @@ DROP TABLE IF EXISTS `ccdb`.`Tracks` ;
 CREATE  TABLE IF NOT EXISTS `ccdb`.`Tracks` (
   `trackid` INT NOT NULL AUTO_INCREMENT ,
   `is_crawled` INT NOT NULL DEFAULT 0 ,
-  `track_name` VARCHAR(45) NOT NULL ,
-  `artist_name` VARCHAR(45) NOT NULL ,
+  `track_name` VARCHAR(255) NOT NULL ,
+  `artist_name` VARCHAR(255) NOT NULL ,
   PRIMARY KEY (`trackid`) )
 ENGINE = InnoDB;
 
@@ -26,74 +26,60 @@ DROP TABLE IF EXISTS `ccdb`.`User` ;
 
 CREATE  TABLE IF NOT EXISTS `ccdb`.`User` (
   `userid` INT NOT NULL AUTO_INCREMENT ,
-  `user_name` VARCHAR(45) NOT NULL ,
+  `user_name` VARCHAR(255) NOT NULL ,
   `is_crawled` INT NOT NULL DEFAULT 0 ,
   PRIMARY KEY (`userid`) )
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `ccdb`.`User_Listens_Tracks`
+-- Table `ccdb`.`user_listens_tracks`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `ccdb`.`User_Listens_Tracks` ;
+DROP TABLE IF EXISTS `ccdb`.`user_listens_tracks` ;
 
-CREATE  TABLE IF NOT EXISTS `ccdb`.`User_Listens_Tracks` (
+CREATE  TABLE IF NOT EXISTS `ccdb`.`user_listens_tracks` (
   `user_userid` INT NOT NULL ,
   `tracks_trackid` INT NOT NULL ,
   PRIMARY KEY (`user_userid`, `tracks_trackid`) )
 ENGINE = InnoDB;
 
-CREATE INDEX `fk_fan_has_Tracks_Tracks1` ON `ccdb`.`User_Listens_Tracks` (`tracks_trackid` ASC) ;
 
-CREATE INDEX `fk_fan_has_Tracks_fan1` ON `ccdb`.`User_Listens_Tracks` (`user_userid` ASC) ;
+-- -----------------------------------------------------
+-- Table `ccdb`.`user_loves_tracks`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `ccdb`.`user_loves_tracks` ;
+
+CREATE  TABLE IF NOT EXISTS `ccdb`.`user_loves_tracks` (
+  `user_userid` INT NOT NULL ,
+  `tracks_trackid` INT NOT NULL ,
+  `lovedate` DATE NULL ,
+  PRIMARY KEY (`user_userid`, `tracks_trackid`) )
+ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `ccdb`.`User_Loves_Tracks`
+-- Table `ccdb`.`user_bans_tracks`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `ccdb`.`User_Loves_Tracks` ;
+DROP TABLE IF EXISTS `ccdb`.`user_bans_tracks` ;
 
-CREATE  TABLE IF NOT EXISTS `ccdb`.`User_Loves_Tracks` (
+CREATE  TABLE IF NOT EXISTS `ccdb`.`user_bans_tracks` (
+  `user_userid` INT NOT NULL ,
+  `tracks_trackid` INT NOT NULL ,
+  `bandate` DATE NULL ,
+  PRIMARY KEY (`user_userid`, `tracks_trackid`) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `ccdb`.`user_shouts_tracks`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `ccdb`.`user_shouts_tracks` ;
+
+CREATE  TABLE IF NOT EXISTS `ccdb`.`user_shouts_tracks` (
   `user_userid` INT NOT NULL ,
   `tracks_trackid` INT NOT NULL ,
   PRIMARY KEY (`user_userid`, `tracks_trackid`) )
 ENGINE = InnoDB;
-
-CREATE INDEX `fk_fan_has_Tracks_Tracks2` ON `ccdb`.`User_Loves_Tracks` (`tracks_trackid` ASC) ;
-
-CREATE INDEX `fk_fan_has_Tracks_fan2` ON `ccdb`.`User_Loves_Tracks` (`user_userid` ASC) ;
-
-
--- -----------------------------------------------------
--- Table `ccdb`.`User_Bans_Tracks`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `ccdb`.`User_Bans_Tracks` ;
-
-CREATE  TABLE IF NOT EXISTS `ccdb`.`User_Bans_Tracks` (
-  `user_userid` INT NOT NULL ,
-  `tracks_trackid` INT NOT NULL ,
-  PRIMARY KEY (`user_userid`, `tracks_trackid`) )
-ENGINE = InnoDB;
-
-CREATE INDEX `fk_fan_has_Tracks_Tracks3` ON `ccdb`.`User_Bans_Tracks` (`tracks_trackid` ASC) ;
-
-CREATE INDEX `fk_fan_has_Tracks_fan3` ON `ccdb`.`User_Bans_Tracks` (`user_userid` ASC) ;
-
-
--- -----------------------------------------------------
--- Table `ccdb`.`User_Shouts_Tracks`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `ccdb`.`User_Shouts_Tracks` ;
-
-CREATE  TABLE IF NOT EXISTS `ccdb`.`User_Shouts_Tracks` (
-  `user_userid` INT NOT NULL ,
-  `tracks_trackid` INT NOT NULL ,
-  PRIMARY KEY (`user_userid`, `tracks_trackid`) )
-ENGINE = InnoDB;
-
-CREATE INDEX `fk_fan_has_Tracks_Tracks4` ON `ccdb`.`User_Shouts_Tracks` (`tracks_trackid` ASC) ;
-
-CREATE INDEX `fk_fan_has_Tracks_fan4` ON `ccdb`.`User_Shouts_Tracks` (`user_userid` ASC) ;
 
 
 -- -----------------------------------------------------
@@ -103,25 +89,45 @@ DROP TABLE IF EXISTS `ccdb`.`Tags` ;
 
 CREATE  TABLE IF NOT EXISTS `ccdb`.`Tags` (
   `tagid` INT NOT NULL ,
-  `tag_text` VARCHAR(45) NOT NULL ,
+  `tag_text` VARCHAR(255) NOT NULL ,
   PRIMARY KEY (`tagid`) )
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `ccdb`.`Tracks_Has_Tags`
+-- Table `ccdb`.`tracks_has_tags`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `ccdb`.`Tracks_Has_Tags` ;
+DROP TABLE IF EXISTS `ccdb`.`tracks_has_tags` ;
 
-CREATE  TABLE IF NOT EXISTS `ccdb`.`Tracks_Has_Tags` (
-  `tracks_trackid` INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS `ccdb`.`tracks_has_tags` (
+  `tracks_trackid` INT NOT NULL AUTO_INCREMENT ,
   `tags_tagid` INT NOT NULL ,
   PRIMARY KEY (`tracks_trackid`, `tags_tagid`) )
 ENGINE = InnoDB;
 
-CREATE INDEX `fk_Tracks_has_Tags_Tags1` ON `ccdb`.`Tracks_Has_Tags` (`tags_tagid` ASC) ;
 
-CREATE INDEX `fk_Tracks_has_Tags_Tracks1` ON `ccdb`.`Tracks_Has_Tags` (`tracks_trackid` ASC) ;
+-- -----------------------------------------------------
+-- Table `ccdb`.`user_has_friends`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `ccdb`.`user_has_friends` ;
+
+CREATE  TABLE IF NOT EXISTS `ccdb`.`user_has_friends` (
+  `User_userid` INT NOT NULL ,
+  `User_userid1` INT NOT NULL ,
+  PRIMARY KEY (`User_userid`, `User_userid1`) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `ccdb`.`user_recent_tracks`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `ccdb`.`user_recent_tracks` ;
+
+CREATE  TABLE IF NOT EXISTS `ccdb`.`user_recent_tracks` (
+  `User_userid` INT NOT NULL ,
+  `Tracks_trackid` INT NOT NULL ,
+  `date` DATE NULL )
+ENGINE = InnoDB;
 
 
 
