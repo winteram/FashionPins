@@ -87,10 +87,12 @@ def toptracks():
         except:
             print "Could not get banned tracks for " + userlist[i]
         else:
+            print len(bannedtracks)
             for bannedtrack in bannedtracks:
                 btrack=bannedtrack.track.get_name()
                 if not btrack:
                     continue
+                print btrack
                 bdate=bannedtrack.date
                 bdate=bdate.split(",")[0]
                 d=time.strptime(bdate, "%d %b %Y")
