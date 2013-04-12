@@ -136,7 +136,7 @@ def toptracks():
                 if cur.fetchone()[0]==1:
                     cur.execute('SELECT trackid FROM Tracks WHERE track_name="%s" AND artist_name="%s"' % (track_name,artist_name))
                     trackid=int(cur.fetchone()[0])
-                    cur.execute('INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (%d,%d)' % (userid,trackid))
+                    cur.execute('INSERT IGNORE INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (%d,%d)' % (userid,trackid))
                 else:
                     try:
                         cur.execute('INSERT INTO Tracks(track_name,artist_name) VALUES ("%s","%s")' % (track_name,artist_name))
@@ -238,13 +238,13 @@ def toptracks():
                 if cur.fetchone()[0] ==1:
                     cur.execute('SELECT userid FROM User Where user_name="%s"' , friendname)
                     friendid=int(cur.fetchone()[0])
-                    cur.execute('INSERT INTO user_has_friends(User_userid,User_userid1) VALUES (%d,%d)' % (userid,friendid))
+                    cur.execute('INSERT IGNORE INTO user_has_friends(User_userid,User_userid1) VALUES (%d,%d)' % (userid,friendid))
                 else:
                     #print 'go ahead add'
                     cur.execute('INSERT INTO User SET user_name="%s"' % (friendname))
                     cur.execute('SELECT LAST_INSERT_ID()')
                     friendid=int(cur.fetchone()[0])
-                    cur.execute('INSERT INTO user_has_friends(User_userid,User_userid1) VALUES (%d,%d)' % (userid,friendid))
+                    cur.execute('INSERT IGNORE INTO user_has_friends(User_userid,User_userid1) VALUES (%d,%d)' % (userid,friendid))
         
         #Get recent tracks
         try:
@@ -341,7 +341,7 @@ def topfans():
                         cur.execute('INSERT INTO User SET user_name="%s"' % (name))
                         cur.execute('SELECT LAST_INSERT_ID()')
                         userid=int(cur.fetchone()[0])
-                        cur.execute('INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (%d,%d)' % (userid,trackid))
+                        cur.execute('INSERT IGNORE INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (%d,%d)' % (userid,trackid))
                         #print name + '-'+artist_name +'-'+ track_name
                         #print artistid
             #Track Shouts
@@ -362,7 +362,7 @@ def topfans():
                         cur.execute('INSERT INTO User SET user_name="%s"' % (name))
                         cur.execute('SELECT LAST_INSERT_ID()')
                         suserid=int(cur.fetchone()[0])
-                        cur.execute('INSERT INTO user_shouts_tracks(user_userid,tracks_trackid) VALUES (%d,%d)' % (suserid,trackid))
+                        cur.execute('INSERT IGNORE INTO user_shouts_tracks(user_userid,tracks_trackid) VALUES (%d,%d)' % (suserid,trackid))
                        
             # Track Tags
             try:
@@ -383,7 +383,7 @@ def topfans():
                         cur.execute('INSERT INTO Tags SET tag_text="%s"' % (tagtext))
                         cur.execute('SELECT LAST_INSERT_ID()')
                         tagid=int(cur.fetchone()[0])
-                        cur.execute('INSERT INTO tracks_has_tags(tags_tagid,tracks_trackid) VALUES (%d,%d)' % (tagid,trackid))
+                        cur.execute('INSERT IGNORE INTO tracks_has_tags(tags_tagid,tracks_trackid) VALUES (%d,%d)' % (tagid,trackid))
                 
                 
             cur.execute('UPDATE Tracks SET is_crawled=1 WHERE track_name="%s" AND artist_name="%s"' % (track_name,artist_name))
