@@ -46,7 +46,7 @@ def cleanName(name):
         name = name[:255]
     name = re.sub("^'","",name)
     name = re.sub("'$","",name)
-    name = re.sub('"','\"',name)
+    name = re.sub('"','\'',name)
     return name
 
 # get initial artists top 2 songs and the fans
