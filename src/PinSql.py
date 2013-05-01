@@ -169,19 +169,24 @@ def getpins():
                             for clearfix in pin.find_all("div","convo attribution clearfix"):
                                 for link in clearfix.find_all("a"):
                                     source = link['href']
+                                    source = source.encode('utf-8')
                                     cur.execute("SELECT COUNT(1) FROM Sources WHERE sourcename=\"%s\"" % (source))
                                     if cur.fetchone()[0]!=1:
                                         try:
                                             cur.execute("INSERT INTO Sources(sourcename) VALUES (\"%s\")" % (source))
                                             cur.execute("SELECT LAST_INSERT_ID()")
                                             source_id=str(cur.fetchone()[0])
-                                            cur.execute("INSERT INTO Pin_has_sources(Pins_pinid,Sources_sourceid) VALUES (\"%s\",\"%s\")" % (pin_id,source_id))
+                                            cur.execute("SELECT COUNT(1) FROM Pin_has_sources WHERE Pins_pinid=\"%s\" and Sources_sourceid=\"%s\"" % (pin_id,source_id))
+                                            if cur.fetchone()[0]!=1:
+                                                cur.execute("INSERT INTO Pin_has_sources(Pins_pinid,Sources_sourceid) VALUES (\"%s\",\"%s\")" % (pin_id,source_id))
                                         except:
                                             print "Error inserting sources:\n%s" % (source)
                                     else:
                                         cur.execute("SELECT sourceid FROM Sources WHERE sourcename=\"%s\"" % (source))
                                         source_id=str(cur.fetchone()[0])
-                                        cur.execute("INSERT INTO Pin_has_sources(Pins_pinid,Sources_sourceid) VALUES (\"%s\",\"%s\")" % (pin_id,source_id))
+                                        cur.execute("SELECT COUNT(1) FROM Pin_has_sources WHERE Pins_pinid=\"%s\" and Sources_sourceid=\"%s\"" % (pin_id,source_id))
+                                        if cur.fetchone()[0]!=1:
+                                            cur.execute("INSERT INTO Pin_has_sources(Pins_pinid,Sources_sourceid) VALUES (\"%s\",\"%s\")" % (pin_id,source_id))
 
         cur.execute("UPDATE Boards SET is_crawled='1' WHERE boardid=\"%s\"" % (board_id))
         conn.commit()
@@ -248,7 +253,7 @@ if __name__=="__main__":
 
     conn = pymysql.connect(host='localhost', unix_socket='/tmp/mysql.sock', user='pinarozturk', passwd='', db='pindb')
     cur = conn.cursor()
-    restart = True
+    restart = False
     
     if restart:
         print "Getting initial boards from search"
@@ -262,7 +267,7 @@ if __name__=="__main__":
         
     
 
-    for z in range(0,1):
+    for z in range(0,2):
         
         print "Getting pins from boards"
         pins=getpins()
