@@ -14,6 +14,15 @@ boardpgurl = "http://pinterest.com/search/boards/?q="+searchword+"&page="
 
 keywords = ['fashion','style','cloth','closet','outfit','apparel']
 
+def cleanName(name):
+    #name=name.encode('utf-8')
+    if len(name) > 255:
+        name = name[:255]
+    #name = re.sub("^'","",name)
+    #name = re.sub("'$","",name)
+    name = re.sub('"','',name)
+    name=re.sub('\\\\','',name)
+    return name
 
 # Get initial boards from search
 def getinitial():
@@ -169,7 +178,9 @@ def getpins():
                             for clearfix in pin.find_all("div","convo attribution clearfix"):
                                 for link in clearfix.find_all("a"):
                                     source = link['href']
-                                    source = source.encode('utf-8')
+                                    source = str(source.encode('utf-8'))
+                                    source=cleanName(source)
+                                    #print source
                                     cur.execute("SELECT COUNT(1) FROM Sources WHERE sourcename=\"%s\"" % (source))
                                     if cur.fetchone()[0]!=1:
                                         try:
