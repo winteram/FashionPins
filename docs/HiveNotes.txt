@@ -1,0 +1,19 @@
+Map Reduce steps:
+
+1. Input = boardid, sourceid
+   Output = sourceid: {boardid1:||boardid1||}
+   	    sourceid: {boardid2:||boardid2||}
+
+2. Input = sourceid: {boardid1:||boardid1||}
+   Output = sourceid: {boardid1:||boardid1||, boardid97:||boardid97||, boardid112:||boardid112||...}
+
+3. Input =  sourceid: {boardid1, boardid97, boardid112...}
+   Output = boardid1-boardid97: ||boardid1||-||boardid97||
+   	    boardid1-boardid112: ||boardid1||-||boardid112||
+   	    boardid97-boardid112: ||boardid97||-||boardid112||
+	    ...
+
+4. Input = boardid1-boardid2: ||boardid1||-||boardid2||
+   	 (count rows for numerator, multiply lengths for denominator)
+   Output = boardid1: {boardid2: 0.7, boardid3: 0.14}
+   	    (where boardidX < boardidY)
