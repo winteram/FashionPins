@@ -5,7 +5,7 @@ from random import randint
 import csv
 import collections
 import pylast
-#from pandas import DataFrame
+from pandas import DataFrame
 
 API_KEY = '8b2fa4cb683e168f66f47adcc708ad22'
 API_SECRET = '96f5ba11b4313fca6a34b65bba5c5843'
@@ -115,8 +115,8 @@ if __name__=="__main__":
     
     #print "{Union: {Intersect: Freq} " +str(btrack)    
 
-##    df = DataFrame(btrack)
-##    df.to_csv('btrack.csv')
+    df = DataFrame(btrack)
+    df.to_csv('../data/btrack.csv')
     
     
     cur.close()

@@ -4,6 +4,7 @@ import pymysql
 import time
 import re
 
+# success
 API_KEY = '8b2fa4cb683e168f66f47adcc708ad22'
 API_SECRET = '96f5ba11b4313fca6a34b65bba5c5843'
 username = 'culturalcluster'
@@ -92,7 +93,7 @@ def getinitial(inartists, cur):
                     cur.execute('INSERT INTO User SET user_name="%s"' % (name))
                     cur.execute('SELECT LAST_INSERT_ID()')
                     userid=int(cur.fetchone()[0])
-                    cur.execute('INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (%d,%d)' % (userid,trackid))
+                    cur.execute('INSERT IGNORE INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (%d,%d)' % (userid,trackid))
                     #print name + '-'+lartist +'-'+ ltrack
                     #print artistid
                 cur.execute('UPDATE Tracks SET is_crawled=1 WHERE track_name="%s" AND artist_name="%s"' % (ltrack,lartist))
@@ -146,7 +147,7 @@ def toptracks():
                         track=cur.execute('SELECT LAST_INSERT_ID()')
                         trackid=int(cur.fetchone()[0])
                         # print trackid
-                        cur.execute('INSERT INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (%d,%d)' % (userid,trackid))
+                        cur.execute('INSERT IGNORE INTO user_listens_tracks(user_userid,tracks_trackid) VALUES (%d,%d)' % (userid,trackid))
                 
         # Get loved tracks
         try:
@@ -170,7 +171,7 @@ def toptracks():
                 if cur.fetchone()[0]==1:
                     cur.execute('SELECT trackid FROM Tracks WHERE track_name="%s" AND artist_name="%s"' % (ltrack_name,lartist_name))
                     ltrackid=int(cur.fetchone()[0])
-                    cur.execute('INSERT INTO user_loves_tracks(user_userid,tracks_trackid,ldate) VALUES (%d,%d,"%s")' % (userid,ltrackid,ldate))
+                    cur.execute('INSERT IGNORE INTO user_loves_tracks(user_userid,tracks_trackid,ldate) VALUES (%d,%d,"%s")' % (userid,ltrackid,ldate))
                 else:
                     try:
                         cur.execute('INSERT INTO Tracks(track_name,artist_name) VALUES ("%s","%s")' % (ltrack_name,lartist_name))
@@ -180,7 +181,7 @@ def toptracks():
                         cur.execute('SELECT LAST_INSERT_ID()')
                         ltrackid=int(cur.fetchone()[0])
                         # print trackid
-                        cur.execute('INSERT INTO user_loves_tracks(user_userid,tracks_trackid,ldate) VALUES (%d,%d,"%s")' % (userid,ltrackid,ldate))
+                        cur.execute('INSERT IGNORE INTO user_loves_tracks(user_userid,tracks_trackid,ldate) VALUES (%d,%d,"%s")' % (userid,ltrackid,ldate))
                
         # Get banned tracks
         try:
@@ -204,7 +205,7 @@ def toptracks():
                 if cur.fetchone()[0]==1:
                     cur.execute('SELECT trackid FROM Tracks WHERE track_name="%s" AND artist_name="%s"' % (btrack_name,bartist_name))
                     btrackid=int(cur.fetchone()[0])
-                    cur.execute('INSERT INTO user_bans_tracks(user_userid,tracks_trackid,bdate) VALUES (%d,%d,"%s")' % (userid,btrackid,bdate))
+                    cur.execute('INSERT IGNORE INTO user_bans_tracks(user_userid,tracks_trackid,bdate) VALUES (%d,%d,"%s")' % (userid,btrackid,bdate))
                 else:
                     try:
                         cur.execute('INSERT INTO Tracks(track_name,artist_name) VALUES ("%s","%s")' % (btrack_name,bartist_name))
@@ -214,7 +215,7 @@ def toptracks():
                         btrack=cur.execute('SELECT LAST_INSERT_ID()')
                         btrackid=int(cur.fetchone()[0])
                         # print trackid
-                        cur.execute('INSERT INTO user_bans_tracks(user_userid,tracks_trackid,bdate) VALUES (%d,%d,"%s")' % (userid,btrackid,bdate))
+                        cur.execute('INSERT IGNORE INTO user_bans_tracks(user_userid,tracks_trackid,bdate) VALUES (%d,%d,"%s")' % (userid,btrackid,bdate))
         if bannedtracks:
             oldestbdate=bannedtracks[len(bannedtracks)-1].timestamp
             #print oldestbdate
@@ -405,7 +406,7 @@ def topfans():
 if __name__=="__main__":
     conn = pymysql.connect(host='wmason.mgnt.stevens-tech.edu', port=3306, user='culturalcluster', passwd='W1nter0zturk', db='ccdb')
     cur = conn.cursor()
-    restart = True
+    restart = False
     # TODO: put in command-line argument for restart or continue
     if restart:
         print "Getting initial artists"
